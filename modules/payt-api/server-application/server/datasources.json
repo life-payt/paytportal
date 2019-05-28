@@ -1,0 +1,36 @@
+{
+  "db": {
+    "host": "10.0.0.2",
+    "port": 27017,
+    "url": "",
+    "database": "administration",
+    "password": "payt2019",
+    "name": "db",
+    "user": "mongopaytadmin",
+    "connector": "mongodb",
+    "authSource": "admin"
+  },
+  "db-aveiro": {
+    "host": "10.0.0.2",
+    "port": 27017,
+    "url": "",
+    "database": "dbaveiro",
+    "password": "payt2019",
+    "name": "db-aveiro",
+    "user": "aveiro_access",
+    "connector": "mongodb",
+    "authSource": "admin"
+  },
+  "db-local": {
+    "host": "localhost",
+    "port": 27017,
+    "url": "",
+    "database": "dbaveiro",
+    "password": "secret",
+    "name": "db-aveiro",
+    "user": "mongoadmin",
+    "connector": "mongodb",
+    "authSource": "admin"
+  }
+}
+

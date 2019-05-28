@@ -1,0 +1,43 @@
+[
+	{rabbit, [
+		{ loopback_users, [ ] },
+		{ tcp_listeners, [ 5672, 1935 ] },
+		{ ssl_listeners, [ ] },
+		{ hipe_compile, false },
+		{ auth_backends, [ rabbit_auth_backend_internal, rabbit_auth_backend_amqp ] }
+	]},
+
+	{rabbitmq_auth_backend_amqp,[
+		{ username, <<"auth">> },
+		{ vhost,    <<"auth">> },
+		{ exchange, <<"auth">> },
+		{ timeout, 5000 }
+	]},
+
+	{rabbitmq_stomp, [
+		{ default_user, [
+			{ login, "anonymous" },
+			{ passcode, "anonymous" }
+		]}
+	]},
+
+	{ rabbitmq_web_stomp,[
+		{ tcp_config, [
+			{port, 8081} 
+		]},
+		{ssl_config, [
+			{port, 8080},
+			{backlog, 1024},
+			{certfile, "/certs/cert1.pem"},
+			{keyfile, "/certs/privkey1.pem"},
+			{cacertfile, "/certs/chain1.pem"}
+		]}
+	]},
+
+	{ rabbitmq_management, [ 
+		{ listener, [
+			{ port, 15672 },
+			{ ssl, false }
+		]}
+	]}
+].

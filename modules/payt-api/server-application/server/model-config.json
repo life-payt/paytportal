@@ -1,0 +1,54 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "db"
+  },
+  "AccessToken": {
+    "dataSource": "db",
+    "public": false
+  },
+  "ACL": {
+    "dataSource": "db",
+    "public": true
+  },
+  "RoleMapping": {
+    "dataSource": "db",
+    "public": false,
+    "options": {
+      "strictObjectIDCoercion": true
+    }
+  },
+  "Role": {
+    "dataSource": "db",
+    "public": false
+  },
+  "aveiro_ids": {
+    "dataSource": "db-aveiro",
+    "public": true
+  },
+  "aveiro_containers": {
+    "dataSource": "db-aveiro",
+    "public": true
+  },
+  "aveiro_usages": {
+    "dataSource": "db-aveiro",
+    "public": true
+  },
+  "aveiro_consumers": {
+    "dataSource": "db-aveiro",
+    "public": true
+  }
+}

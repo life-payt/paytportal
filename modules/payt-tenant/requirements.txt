@@ -1,0 +1,10 @@
+aiopg
+unidecode
+openpyxl
+chardet
+py-dateutil
+aiomcache
+aiohttp
+xlrd
+xlsxwriter
+ckanapi

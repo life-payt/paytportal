@@ -1,0 +1,13 @@
+#################
+## Directories
+#################
+
+node_modules/
+.vscode
+.DS_Store
+#################
+## Files
+#################
+
+src/client/public/*.html
+#src/client/bundle.js

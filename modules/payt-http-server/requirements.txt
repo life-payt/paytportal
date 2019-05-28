@@ -1,0 +1,5 @@
+aiohttp
+aiohttp-index
+aiohttp_jinja2
+ujson
+aiomcache
