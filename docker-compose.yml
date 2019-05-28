@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+
+  memcached:
+    container_name: payt-memcached
+    image: memcached
+
+  rabbit:
+    container_name: payt-rabbitmq
+    image: payt-rabbitmq
+    environment:
+      - AUTH_ACCESS_KEY=testing_key_auth
+    ports:
+      - 5672:5672
+      - 25672:25672
+      - 15672:15672
+      - 61613:61613
+      - 1935:1935
+      - 8080:8080
+    volumes:
+       - /etc/letsencrypt/archive/portal.life-payt.eu:/certs
+
+  auth:
+    container_name: payt-auth
+    image: payt-auth-amqp
+    environment:
+      - AUTH_ACCESS_KEY=testing_key_auth
+      - RABBITMQ_HOST=rabbit
+      - DB_DBNAME=payt_auth
+      - DB_USERNAME=payt_auth
+      - DB_PASSWORD=8db0590c-4f95-48f5-93d7-7b094bdd6089
+      - DB_HOST=10.0.0.2
+    depends_on:
+      - rabbit
+
+  http-server:
+    container_name: payt-http-server
+    image: payt-http-server
+    environment:
+      - RABBITMQ_HOST=rabbit
+      - RABBITMQ_USER=httpserver
+      - RABBITMQ_KEY=testing_key_http
+      - MEMCACHED_HOST=memcached
+    ports:
+      - 8000:80
+    depends_on:
+      - rabbit
+      - auth
+
+  tenant:
+    container_name: payt-tenant
+    image: payt-tenant
+    environment:
+      - TENANT_NAME=test_tenant
+      - RABBITMQ_HOST=rabbit
+      - RABBITMQ_USER=payt_tenant
+      - RABBITMQ_KEY=testing_key_tenant
+      - DB_DBNAME=payt_tenant
+      - DB_HOST=your_db_ip
+      - DB_USERNAME=payt_tenant
+      - DB_PASSWORD=your_db_password
+      - MEMCACHED_HOST=memcached
+    depends_on:
+      - rabbit
+      - auth
