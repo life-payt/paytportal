@@ -1,0 +1,3 @@
+[submodule "modules/payt-http-server/paytwebapp"]
+	path = modules/payt-http-server/paytwebapp
+	url = https://github.com/life-payt/paytwebapp.git
