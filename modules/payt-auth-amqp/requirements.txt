@@ -2,3 +2,4 @@ itsdangerous
 aiopg
 py-dateutil
 aiomcache
+requests

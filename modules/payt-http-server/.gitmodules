@@ -1,0 +1,4 @@
+[submodule "webapp"]
+	path = webapp
+	url = git@git.atnog.av.it.pt:life-payt/payt-webapp.git
+	branch = master

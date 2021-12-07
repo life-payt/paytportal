@@ -71,7 +71,7 @@ CREATE TABLE payt.container (
 	long				DOUBLE PRECISION,
 	weekly_collect_days	INTEGER			,
 	waste_type 			INTEGER			REFERENCES payt.waste_type(waste_type_id),
-	cb_id				INTEGER
+	cb_id				INTEGER			UNIQUE
 );
 
 CREATE TABLE payt.producer_container (
@@ -103,7 +103,9 @@ CREATE TABLE payt.garbage_collection (
 	collection_id		SERIAL			PRIMARY KEY,
 	collection_ts		TIMESTAMP 		DEFAULT CURRENT_TIMESTAMP,
 	card 				VARCHAR(40)		REFERENCES payt.id_card(card_id),
-	container 			INTEGER			REFERENCES payt.container(container_id)
+	container 			INTEGER			REFERENCES payt.container(container_id),
+	counter				INTEGER,
+	CONSTRAINT unique_usage UNIQUE (card, container, collection_ts)
 );
 
 CREATE INDEX current_garbage_collection ON payt.garbage_collection (collection_id) WHERE card IS NULL;
@@ -166,7 +168,8 @@ CREATE TABLE payt.real_bill (
 	value				NUMERIC(10,2)	NOT NULL,
 	period_begin		DATE,
 	period_end			DATE,
-	party 				INTEGER			REFERENCES payt.producer_party(pp_id)
+	party 				INTEGER			REFERENCES payt.producer_party(pp_id),
+	document_id			INTEGER			UNIQUE
 );
 
 CREATE TABLE payt.simulated_bill (
@@ -257,3 +260,6 @@ select concat(table_name::text,'.',column_name::text) as field from information_
 where table_schema = 'payt';
 
 update payt.policies set polic = 'public' where id > 0;
+
+ALTER TABLE payt.users 
+	ADD COLUMN redirect BOOLEAN DEFAULT false;

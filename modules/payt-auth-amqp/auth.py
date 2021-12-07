@@ -5,12 +5,14 @@ import uuid
 import sys
 from auth_db.dbfuncs import DBfuncs
 from cryptohash import Cryptohash
+from apifuncs import Apifuncs
 import asyncio
 import base64
 import os
 import hashlib
 import inspect
 
+# TODO: - new method for getting county
 
 logger = logging.getLogger('auth')
 logger.setLevel(logging.DEBUG)
@@ -39,6 +41,7 @@ class PAYTAuth:
 		self._username = kwargs.get('username', 'anonymous')
 		self._access_key = kwargs.get('password', 'anonymous')
 		self._cryptohash = Cryptohash()
+		self._apifuncs = Apifuncs()
 		self._payt_client = YAASClient(loop,
 			key="payt-auth",
 			host=kwargs.get('host', '127.0.0.1'),
@@ -145,6 +148,8 @@ class PAYTAuth:
 		await self._payt_client.register("payt.auth.get_functions", self.get_functions)
 		await self._payt_client.register("payt.auth.alter_policy", self.alter_policy)
 		await self._payt_client.register("payt.auth.alter_op", self.alter_op)
+		await self._payt_client.register("payt.auth.internal.get_api_users", self.get_api_users)
+		await self._payt_client.register("payt.auth.internal.insert_api_user", self.insert_api_user)
 
 		yh = YAASCHandler(self._payt_client)
 		yh.setLevel(logging.DEBUG)
@@ -195,6 +200,15 @@ class PAYTAuth:
 				logger.debug('![ACCESS CONTROL]! - Access granted.')
 				return await function(self, *args, **kwargs)
 
+			if p == 'internal':
+				print('check-internal')
+				print(user_id)
+				if role == 'admin' or isinstance(user_id, str):
+					logger.debug('![ACCESS CONTROL]! - Access granted.')
+					return await function(self, *args, **kwargs)
+
+				return await self.denied()
+
 			if isinstance(user_id, str):
 				if user_id == 'anonymous':
 					return await self.denied()
@@ -212,13 +226,6 @@ class PAYTAuth:
 					logger.debug('![ACCESS CONTROL]! - Access granted.')
 					return await function(self, *args, **kwargs)
 				
-				return await self.denied()
-
-			if p == 'internal':
-				if role == 'admin' or isinstance(user_id, str):
-					logger.debug('![ACCESS CONTROL]! - Access granted.')
-					return await function(self, *args, **kwargs)
-
 				return await self.denied()
 
 			if p == 'owner':
@@ -334,6 +341,7 @@ class PAYTAuth:
 			pw_hash = hashlib.sha256(password.encode()).hexdigest()
 			salt = await self._db_conn.get_service_salt(user_id)
 			real_pwhash = await self._db_conn.get_service_pw(user_id)
+			# password == SERVICES_DB[user_id]['secret']
 			pw_match = await self._cryptohash.comparePW(salt, pw_hash, real_pwhash)
 		
 		conditions = [
@@ -354,6 +362,7 @@ class PAYTAuth:
 		user_id = username
 		LOG_MSG="[AUTH_VHOST]: [user_id: %s, vhost: %s] -> "%(user_id, vhost)
 
+		#userexists = await self._db_conn.user_id_exists(user_id)
 		exists = await self._db_conn.service_exists(user_id)
 		allow_conditions = [
 			vhost == 'payt' and not self.is_anonymous(user_id),
@@ -372,6 +381,16 @@ class PAYTAuth:
 		user_id = username
 		LOG_MSG="[AUTH_RESOURCE]: [user_id: %s, vhost: %s, resource: %s, name: %s, permission: %s] -> "\
 			%(user_id,vhost, resource, name, permission)
+
+		# deny_conditions = [
+		# 	vhost == 'auth' and self.is_anonymous(user_id),
+		# 	resource == 'exchange' and name == 'auth' and self.is_anonymous(user_id),
+		# 	resource == 'exchange' and name == 'logging' and self.is_anonymous(user_id),
+		# 	resource == 'exchange' and name == 'logging' and user_id not in SERVICES_DB.keys(),
+		# ]
+		# if any(deny_conditions):
+		# 	logger.debug("%s REFUSED"%LOG_MSG)
+		# 	return "deny"
 
 		logger.debug("%s AUTHORIZED"%LOG_MSG)
 		return "allow"
@@ -588,6 +607,13 @@ class PAYTAuth:
 
 	@access_control
 	async def validate_user(self, real_user_id, email, pwd, **kwargs):
+		user_id = kwargs.get('user_id')
+		validated = await self._db_conn.check_validated(real_user_id)
+
+		if validated:
+			logger.debug("[VALIDATE_USER] - User already validated.. No action taken.")
+			return 1
+
 		role = await self._db_conn.get_role(real_user_id)
 		logger.debug("[VALIDATE_USER][%s][%s] - Function Called."%(real_user_id, role))
 		em = await self._db_conn.set_email(email, real_user_id)
@@ -705,17 +731,20 @@ class PAYTAuth:
 	@access_control
 	async def get_masterkey(self, user, **kwargs):
 		user_id = kwargs.get('user_id')
-		role = ''
 		role = await self._db_conn.get_role(user_id)
+		
+		# generate masterkey
+		masterkey = str(uuid.uuid4())[:16]
+		salt = await self._db_conn.get_salt(user)
+		master_hashed = await self._cryptohash.doHashSalt(hashlib.sha256(masterkey.encode()).hexdigest(), salt)
 
-		if role == 'county' or role == 'admin':
-			logger.debug('[GET_MASTERKEY][%s][%s] - Access authorized.'%(user_id, role))
-			ret = await self._db_conn.get_masterkey(user)
-			logger.debug('[GET_MASTERKEY][%s][%s] - Masterkey of %s obtained.'%(user_id, role, user))
-			return ret
-		else:
-			logger.debug('[GET_MASTERKEY][%s][%s] - WARNING! UNAUTHORIZED ACCESS TO FUNCTION HAS BEEN ATTEMPTED!'%(user_id,role))
-			return None
+		logger.debug('[GET_MASTERKEY][%s][%s] - New Masterkey set.'%(user_id, role))
+		ret = await self._db_conn.set_masterkey(user, master_hashed)
+		await self._db_conn.set_pw(salt, master_hashed, user)
+		logger.debug('[GET_MASTERKEY][%s][%s] - Password changed to new Masterkey.'%(user_id, role))
+		
+		logger.debug('[GET_MASTERKEY][%s][%s] - Masterkey of %s obtained.'%(user_id, role, user))
+		return masterkey
 
 	async def get_user_status(self, userid, **kwargs):
 		ret = await self._db_conn.get_status_user(userid)
@@ -739,8 +768,9 @@ class PAYTAuth:
 		if exists:
 			p_userid = await self._db_conn.get_userID(username)
 			master = await self._db_conn.get_masterkey(p_userid)
+			salt = await self._db_conn.get_salt(p_userid)
 
-			if mk_hash == hashlib.sha256(master.encode()).hexdigest():
+			if await self._cryptohash.comparePW(salt, mk_hash, master):
 				logger.debug('[RESET_PW][][] - Username exists and Masterkey matches. Resetting now..')
 				
 				newsalt, newpwdhash = await self._cryptohash.doHash(mk_hash)
@@ -866,4 +896,48 @@ class PAYTAuth:
 				ret = await self._payt_client.call('payt.'+search.lower()+'.db.internal.alter_op', id, op, exchange=search.lower())
 
 		logger.debug('[ALTER_OP] - Database updated.')
+		return 1
+
+	@access_control
+	async def get_api_users(self, page, nelements, search, **kwargs):
+		logger.debug('[GET_API_USERS] - Function called.')
+		data = []
+
+		data = await self._db_conn.get_api_users(limit=nelements, offset=(page-1)*nelements)
+		logger.debug('[GET_API_USERS] - Return obtained.')
+
+		return data
+
+	@access_control
+	async def insert_api_user(self, username, email, county, **kwargs):
+		logger.debug('[INSERT_API_USERS] - Function called.')
+		logger.debug('[INSERT_API_USERS] - Making the API call...')
+		password = str(uuid.uuid4())[:16]
+
+		res = await self._apifuncs.insertUser(username, password, email, county)
+		# ext_uid = result from api call
+		if res != -1:
+			ext_uid = res
+			await self._db_conn.insert_api_user(username, email, county, ext_uid)
+			logger.debug('[INSERT_API_USERS] - User added to both databases.')
+			return password
+		else:
+			logger.debug('[INSERT_API_USERS] - User already exists.')
+
+		return 0
+
+	@access_control
+	async def delete_api_user(self, username):
+		logger.debug('[DELETE_API_USER] - Function called.')
+		logger.debug('[DELETE_API_USER] - Making the API call...')
+
+		ext_uid = await self._db_conn.get_uid(username)
+
+		if ext_uid:
+			res = await self._apifuncs.delete_user(ext_uid)
+		else:
+			logger.debug('[DELETE_API_USER] - User not found.')
+			return -1
+
+		logger.debug('[DELETE_API_USER] - User deleted from all databases.')
 		return 1

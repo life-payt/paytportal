@@ -33,6 +33,7 @@ if [ ! -f /tenant.cfg ]; then
 		PASSWORD = "$W_PASSWORD"
 		SYNC_PERIOD = "$W_SYNC_PERIOD"
 		TOKEN_TIMEOUT = "$W_TOKEN_TIMEOUT"
+		STATE = "$W_STATE"
 
 		[EXPORTER]
 		E_NAME = "$E_NAME"

@@ -1,0 +1,370 @@
+<!DOCTYPE HTML><html><head><title>LIFE PAYT API documentation</title><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="generator" content="https://github.com/raml2html/raml2html 7.4.0"><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"><script type="text/javascript" src="https://code.jquery.com/jquery-1.11.0.min.js"></script><script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script><script type="text/javascript">
+      $(document).ready(function() {
+  $('.page-header pre code, .top-resource-description pre code, .modal-body pre code').each(function(i, block) {
+    hljs.highlightBlock(block);
+  });
+
+  $('[data-toggle]').click(function() {
+    var selector = $(this).data('target') + ' pre code';
+    $(selector).each(function(i, block) {
+      hljs.highlightBlock(block);
+    });
+  });
+
+  // open modal on hashes like #_action_get
+  $(window).bind('hashchange', function(e) {
+    var anchor_id = document.location.hash.substr(1); //strip #
+    var element = $('#' + anchor_id);
+
+    // do we have such element + is it a modal?  --> show it
+    if (element.length && element.hasClass('modal')) {
+      element.modal('show');
+    }
+  });
+
+  // execute hashchange on first page load
+  $(window).trigger('hashchange');
+
+  // remove url fragment on modal hide
+  $('.modal').on('hidden.bs.modal', function() {
+    try {
+      if (history && history.replaceState) {
+          history.replaceState({}, '', '#');
+      }
+    } catch(e) {}
+  });
+});
+    </script><style>
+      .hljs {
+  background: transparent;
+}
+.parent {
+  color: #999;
+}
+.list-group-item > .badge {
+  float: none;
+  margin-right: 6px;
+}
+.panel-title > .methods {
+  float: right;
+}
+.badge {
+  border-radius: 0;
+  text-transform: uppercase;
+  width: 70px;
+  font-weight: normal;
+  color: #f3f3f6;
+  line-height: normal;
+}
+.badge_get {
+  background-color: #63a8e2;
+}
+.badge_post {
+  background-color: #6cbd7d;
+}
+.badge_put {
+  background-color: #22bac4;
+}
+.badge_delete {
+  background-color: #d26460;
+}
+.badge_patch {
+  background-color: #ccc444;
+}
+.list-group,
+.panel-group {
+  margin-bottom: 0;
+}
+.panel-group .panel+.panel-white {
+  margin-top: 0;
+}
+.panel-group .panel-white {
+  border-bottom: 1px solid #F5F5F5;
+  border-radius: 0;
+}
+.panel-white:last-child {
+  border-bottom-color: white;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+.panel-white .panel-heading {
+  background: white;
+}
+.tab-pane ul {
+  padding-left: 2em;
+}
+.tab-pane h1 {
+  font-size: 1.3em;
+}
+.tab-pane h2 {
+  font-size: 1.2em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+.tab-pane h3 {
+  font-size: 1.1em;
+}
+.tab-content {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+}
+#sidebar {
+  margin-top: 30px;
+  padding-right: 5px;
+  overflow: auto;
+  height: 90%;
+}
+.top-resource-description {
+  border-bottom: 1px solid #ddd;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description {
+  border-bottom: 1px solid #fcfcfc;
+  background: #fcfcfc;
+  padding: 15px 15px 0 15px;
+  margin: -15px -15px 10px -15px;
+}
+.resource-description p:last-child {
+  margin: 0;
+}
+.list-group .badge {
+  float: left;
+}
+.method_description {
+  margin-left: 85px;
+}
+.method_description p:last-child {
+  margin: 0;
+}
+.list-group-item {
+  cursor: pointer;
+}
+.list-group-item:hover {
+  background-color: #f5f5f5;
+}
+pre code {
+  overflow: auto;
+  word-wrap: normal;
+  white-space: pre;
+}
+.items {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+}
+.examples {
+  margin-left: 0.5em;
+}
+.resource-modal li > ul {
+  margin-bottom: 1em;
+}
+.required {
+  color: #f00;
+}
+    </style></head><body data-spy="scroll" data-target="#sidebar"><div class="container"><div class="row"><div class="col-md-9" role="main"><div class="page-header"><h1>LIFE PAYT API documentation <small>version 1</small></h1><p>http://api.life-payt.eu/api</p><h3 id="welcome"><a href="#welcome">Welcome</a></h3><p>Welcome to the LIFE PAYT API Documentation. In order to use it propeprly replace <em>location</em> with your location name in the request string. E.G: &#39;aveiro-container&#39; or &#39;condeixa-container&#39;. Otherwise it will not work and you will get a &#39;Not Authorized&#39; Message.</p></div><div class="panel panel-default"><div class="panel-heading"><h3 id="location_container" class="panel-title">Containers endpoint.</h3></div><div class="panel-body"><div class="top-resource-description"><p>Endpoint where containers can be requested or posted.</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_container"><span class="parent"></span>/location-container</a> <span class="methods"><a href="#location_container_get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a> <a href="#location_container_post"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_container" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#location_container_get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Gets all identifiers available in this endpoint.</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#location_container_post'" class="list-group-item"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Endpoint to add a new client to the databases.</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_container_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-container</h4></div><div class="modal-body"><div class="alert alert-info"><p>Gets all identifiers available in this endpoint.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_container_get_request" data-toggle="tab">Request</a></li><li><a href="#location_container_get_response" data-toggle="tab">Response</a></li><li><a href="#location_container_get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_container_get_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_container?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_container_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return of all usages in database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Array of json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+  {
+    "id": "1234567890",
+    "latitude": "40.00000",
+    "longitude": "-23.0000&#39;",
+    "capacity": 500000
+  }
+]</code></pre></div></div><div class="tab-pane" id="location_container_get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_container_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-container</h4></div><div class="modal-body"><div class="alert alert-info"><p>Endpoint to add a new client to the databases.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_container_post_request" data-toggle="tab">Request</a></li><li><a href="#location_container_post_response" data-toggle="tab">Response</a></li><li><a href="#location_container_post_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_container_post_request"><h3>Query Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(String)</em><p>Unique identifier for a container. This has to be mantained by each municipality. We take no responsibility for duplicates.</p></li><li><strong>latitude</strong>: <em>(String)</em><p>Latitude of the location of the container.</p></li><li><strong>longitude</strong>: <em>(String)</em><p>Longitude of the location of the container.</p></li><li><strong>capacity</strong>: <em>(Number)</em><p>Capacity of the container.</p></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Consumer</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X POST --header &#39;Content-Type: application/json&#39; --header &#39;Accept: application/json&#39; -d 
+&#39;{ \ 
+    "id": "1234567890", \
+    "latitude": "40.00000", \
+    "longitude": "-23.0000&#39;", \
+    "capacity": 500000 \
+ }&#39; 
+ &#39;http://api.life-payt.eu/api/location_container?access_token=YOUR_ACCESS_TOKEN&#39;
+</code></pre></div></div><div class="tab-pane" id="location_container_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Post successful. As response you receive the data that has been sent.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "1234567890",
+  "latitude": "40.00000",
+  "longitude": "-23.0000&#39;",
+  "capacity": 500000
+}
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_container_post_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="location_usages" class="panel-title">Usages endpoint.</h3></div><div class="panel-body"><div class="top-resource-description"><p>Endpoint where container usages by clients can be requested or posted.</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_usages"><span class="parent"></span>/location-usages</a> <span class="methods"><a href="#location_usages_get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a> <a href="#location_usages_post"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_usages" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#location_usages_get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Gets all identifiers available in this endpoint.</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#location_usages_post'" class="list-group-item"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Endpoint to add a new client to the databases.</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_usages_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-usages</h4></div><div class="modal-body"><div class="alert alert-info"><p>Gets all identifiers available in this endpoint.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_usages_get_request" data-toggle="tab">Request</a></li><li><a href="#location_usages_get_response" data-toggle="tab">Response</a></li><li><a href="#location_usages_get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_usages_get_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_usages?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_usages_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return of all usages in database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Array of json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+  {
+    "id": "1234567890",
+    "producer": "consumer_id/identifier of client",
+    "timestamp": "2019-07-10T13:23:36.503Z",
+    "container": "container_id"
+  }
+]</code></pre></div></div><div class="tab-pane" id="location_usages_get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_usages_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-usages</h4></div><div class="modal-body"><div class="alert alert-info"><p>Endpoint to add a new client to the databases.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_usages_post_request" data-toggle="tab">Request</a></li><li><a href="#location_usages_post_response" data-toggle="tab">Response</a></li><li><a href="#location_usages_post_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_usages_post_request"><h3>Query Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(String)</em><p>Unique identifier for a usage. This has to be mantained by each municipality. We take no responsibility for duplicates.</p></li><li><strong>producer</strong>: <em><span class="required">required</span>(String)</em><p>Identification of the producer. Can be the identifier used or the client identifier.</p></li><li><strong>timestamp</strong>: <em><span class="required">required</span>(Date)</em><p>Usage timestamp.</p></li><li><strong>container</strong>: <em><span class="required">required</span>(String)</em><p>Identification of the container where the usage was made.</p></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Consumer</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X POST --header &#39;Content-Type: application/json&#39; --header &#39;Accept: application/json&#39; -d 
+&#39;{ \ 
+    "id": "1234567890", \
+    "producer": "consumer_id/identifier of client", \
+    "timestamp": "2019-07-10T13:23:36.503Z", \
+    "container": "container_id" \
+ }&#39; 
+ &#39;http://api.life-payt.eu/api/location_usages?access_token=YOUR_ACCESS_TOKEN&#39;
+</code></pre></div></div><div class="tab-pane" id="location_usages_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Post successful. As response you receive the data that has been sent.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "1234567890",
+  "producer": "consumer_id/identifier of client",
+  "timestamp": "2019-07-10T13:23:36.503Z",
+  "container": "container_id"
+}
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_usages_post_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_usages__id_"><span class="parent">/location-usages</span>/{id}</a> <span class="methods"><a href="#location_usages__id__get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_usages__id_" class="panel-collapse collapse"><div class="panel-body"><div class="resource-description"><p>Returns the specific user based on its id. Replace <em>ID</em> with the pretended object ID.</p></div><div class="list-group"><div onclick="window.location.href = '#location_usages__id__get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_usages__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent">/location-usages</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_usages__id__get_request" data-toggle="tab">Request</a></li><li><a href="#location_usages__id__get_response" data-toggle="tab">Response</a></li><li><a href="#location_usages__id__get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_usages__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_usages/_ID_?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_usages__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return specific usage from database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "1234567890",
+  "producer": "consumer_id/identifier of client",
+  "timestamp": "2019-07-10T13:23:36.503Z",
+  "container": "container_id"
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_usages__id__get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="location_consumers" class="panel-title">Consumers (Clients)</h3></div><div class="panel-body"><div class="top-resource-description"><p>Consumers endpoint where clients can be requested or posted.</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_consumers"><span class="parent"></span>/location-consumers</a> <span class="methods"><a href="#location_consumers_get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a> <a href="#location_consumers_post"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_consumers" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#location_consumers_get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Gets all consumers available in this endpoint.</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#location_consumers_post'" class="list-group-item"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Endpoint to add a new client to the databases.</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_consumers_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-consumers</h4></div><div class="modal-body"><div class="alert alert-info"><p>Gets all consumers available in this endpoint.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_consumers_get_request" data-toggle="tab">Request</a></li><li><a href="#location_consumers_get_response" data-toggle="tab">Response</a></li><li><a href="#location_consumers_get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_consumers_get_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/aveiro_consumers?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_consumers_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return of all Consumers in database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Array of json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+  {
+    "id": "1234567890ABC",
+    "name": "Fake User",
+    "address": "Fake Street 1",
+    "zip": "0000-123",
+    "location": "Fake Town",
+    "nif": "1234567890",
+    "idnumber": "1232435678"
+  }
+]</code></pre></div></div><div class="tab-pane" id="location_consumers_get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_consumers_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-consumers</h4></div><div class="modal-body"><div class="alert alert-info"><p>Endpoint to add a new client to the databases.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_consumers_post_request" data-toggle="tab">Request</a></li><li><a href="#location_consumers_post_response" data-toggle="tab">Response</a></li><li><a href="#location_consumers_post_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_consumers_post_request"><h3>Query Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(String)</em><p>Unique identifier for a client. This has to be mantained by each municipality. We take no responsibility for duplicates.</p></li><li><strong>name</strong>: <em><span class="required">required</span>(String)</em><p>Full name of the Client.</p></li><li><strong>address</strong>: <em><span class="required">required</span>(String)</em><p>Client address.</p></li><li><strong>zip</strong>: <em><span class="required">required</span>(String)</em><p>Zip code of the client address.</p></li><li><strong>location</strong>: <em><span class="required">required</span>(String)</em><p>Location.</p></li><li><strong>nif</strong>: <em><span class="required">required</span>(String)</em><p>Tax number.</p></li><li><strong>idnumber</strong>: <em><span class="required">required</span>(String)</em><p>Identification card number.</p></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Consumer</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X POST --header &#39;Content-Type: application/json&#39; --header &#39;Accept: application/json&#39; -d 
+&#39;{ \ 
+   "id": "string", \ 
+   "name": "string", \ 
+   "address": "string", \ 
+   "zip": "string", \ 
+   "location": "string", \ 
+   "nif": "string", \ 
+   "idnumber": "string" \ 
+ }&#39; 
+ &#39;http://api.life-payt.eu/api/aveiro_consumers?access_token=YOUR_ACCESS_TOKEN&#39;
+</code></pre></div></div><div class="tab-pane" id="location_consumers_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Post successful. As response you receive the data that has been sent.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "rsdtfghbjn",
+  "name": "string",
+  "address": "string",
+  "zip": "string",
+  "location": "string",
+  "nif": "string",
+  "idnumber": "string"
+}
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_consumers_post_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_consumers__id_"><span class="parent">/location-consumers</span>/{id}</a> <span class="methods"><a href="#location_consumers__id__get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_consumers__id_" class="panel-collapse collapse"><div class="panel-body"><div class="resource-description"><p>Returns the specific user based on its id.</p></div><div class="list-group"><div onclick="window.location.href = '#location_consumers__id__get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_consumers__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent">/location-consumers</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_consumers__id__get_request" data-toggle="tab">Request</a></li><li><a href="#location_consumers__id__get_response" data-toggle="tab">Response</a></li><li><a href="#location_consumers__id__get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_consumers__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_consumers/_ID_?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_consumers__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return specific Consumers in database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "_ID_",
+  "name": "Fake User",
+  "address": "Fake Street 1",
+  "zip": "0000-123",
+  "location": "Fake Town",
+  "nif": "1234567890",
+  "idnumber": "1232435678"
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_consumers__id__get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="location_ids" class="panel-title">Customer IDS</h3></div><div class="panel-body"><div class="top-resource-description"><p>Ids endpoint where client identifiers can be requested or posted.</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_ids"><span class="parent"></span>/location-ids</a> <span class="methods"><a href="#location_ids_get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a> <a href="#location_ids_post"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_ids" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#location_ids_get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Gets all identifiers available in this endpoint.</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#location_ids_post'" class="list-group-item"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"><p>Endpoint to add a new client to the databases.</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_ids_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-ids</h4></div><div class="modal-body"><div class="alert alert-info"><p>Gets all identifiers available in this endpoint.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_ids_get_request" data-toggle="tab">Request</a></li><li><a href="#location_ids_get_response" data-toggle="tab">Response</a></li><li><a href="#location_ids_get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_ids_get_request"><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_ids?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_ids_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return of all identifiers in database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Array of json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+  {
+    "id": "1234567890",
+    "start": "2019-07-10T13:00:00.000Z",
+    "end": "2019-07-11T13:00:00.000Z"
+  }
+]</code></pre></div></div><div class="tab-pane" id="location_ids_get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_ids_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent"></span>/location-ids</h4></div><div class="modal-body"><div class="alert alert-info"><p>Endpoint to add a new client to the databases.</p></div><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_ids_post_request" data-toggle="tab">Request</a></li><li><a href="#location_ids_post_response" data-toggle="tab">Response</a></li><li><a href="#location_ids_post_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_ids_post_request"><h3>Query Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(String)</em><p>Unique identifier for a identifier. This has to be mantained by each municipality. We take no responsibility for duplicates.</p></li><li><strong>start</strong>: <em>(String)</em><p>Date of activation.</p></li><li><strong>end</strong>: <em>(String)</em><p>Date of deactivation.</p></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: Consumer</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X POST --header &#39;Content-Type: application/json&#39; --header &#39;Accept: application/json&#39; -d 
+&#39;{ \ 
+   "id": "string", \ 
+   "start": "date", \ 
+   "end": "date" \ 
+ }&#39; 
+ &#39;http://api.life-payt.eu/api/location_ids?access_token=YOUR_ACCESS_TOKEN&#39;
+</code></pre></div></div><div class="tab-pane" id="location_ids_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Post successful. As response you receive the data that has been sent.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "ext_id": String,
+  "start": Date,
+  "end": Date
+}
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_ids_post_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_location_ids__id_"><span class="parent">/location-ids</span>/{id}</a> <span class="methods"><a href="#location_ids__id__get"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span></a></span></h4></div><div id="panel_location_ids__id_" class="panel-collapse collapse"><div class="panel-body"><div class="resource-description"><p>Returns the specific user based on its id. Replace <em>ID</em> with the pretended object ID.</p></div><div class="list-group"><div onclick="window.location.href = '#location_ids__id__get'" class="list-group-item"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span><div class="method_description"></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="location_ids__id__get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get <span class="glyphicon glyphicon-lock" title="Authentication required"></span></span> <span class="parent">/location-ids</span>/{id}</h4></div><div class="modal-body"><div class="alert alert-warning"><span class="glyphicon glyphicon-lock" title="Authentication required"></span> Secured by <b>Access Token</b><p>Security token which has to be provided in the header. This can be obtained by the resource &#39;access_token&#39;.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#location_ids__id__get_request" data-toggle="tab">Request</a></li><li><a href="#location_ids__id__get_response" data-toggle="tab">Response</a></li><li><a href="#location_ids__id__get_securedby" data-toggle="tab">Security</a></li></ul><div class="tab-content"><div class="tab-pane active" id="location_ids__id__get_request"><h3>URI Parameters</h3><ul><li><strong>id</strong>: <em><span class="required">required</span>(string)</em></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>curl -X GET --header &#39;Accept: application/json&#39; &#39;http://api.life-payt.eu/api/location_ids/_ID_?access_token=YOUR_ACCESS_TOKEN
+</code></pre></div></div><div class="tab-pane" id="location_ids__id__get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Return specific identifier from database.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: json</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "_ID_",
+  "start": "",
+  "end": ""
+}</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/401" target="_blank">401</a></h2><p>User is not authorized to access or has not logged in.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "error": {
+    "statusCode": 401,
+    "name": "Error",
+    "message": "Authorization Required",
+    "code": "AUTHORIZATION_REQUIRED",
+    "stack": "Some long message. Not relevant."
+  }
+}
+</code></pre></div></div><div class="tab-pane" id="location_ids__id__get_securedby"><h1>Secured by Access Token</h1><h3>Headers</h3><ul><li><strong>Authorization</strong>: <em><span class="required">required</span>(string)</em><p>Security token you have to provide in the header of the request.</p></li></ul></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="users" class="panel-title">Users (API)</h3></div><div class="panel-body"><div class="top-resource-description"><p>Endpoint for user login that returns the access token.</p></div><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_users_login"><span class="parent">/Users</span>/login</a> <span class="methods"><a href="#users_login_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_users_login" class="panel-collapse collapse"><div class="panel-body"><div class="resource-description"><p>Returns ID. To get your identifier call /Users/login with your credentials in a object with username and password.</p></div><div class="list-group"><div onclick="window.location.href = '#users_login_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>This method returns upon correct credentials the access token of the user necessary for procteted endpoints.</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="users_login_post"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_post">post</span> <span class="parent">/Users</span>/login</h4></div><div class="modal-body"><div class="alert alert-info"><p>This method returns upon correct credentials the access token of the user necessary for procteted endpoints.</p></div><ul class="nav nav-tabs"><li class="active"><a href="#users_login_post_request" data-toggle="tab">Request</a></li><li><a href="#users_login_post_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="users_login_post_request"><h3>Query Parameters</h3><ul><li><strong>credentials</strong>: <em><span class="required">required</span>(json)</em><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "username": "testuser",
+  "password": "00000"
+}</code></pre></div></li></ul><h3>Body</h3><p><strong>Media type</strong>: example</p><p><strong>Type</strong>:</p><pre><code>curl -X POST --header &#39;Content-Type: application/json&#39; --header &#39;Accept: application/json&#39; -d 
+&#39;{ \ 
+   "username": "testuser", \ 
+   "password": "000000" \ 
+ }&#39; 
+ &#39;https://api.life-payt.eu/api/Users/login&#39;
+</code></pre></div><div class="tab-pane" id="users_login_post_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><p>Copy the "id" field for using as access token for further actions.</p><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>:</p><pre><code>{
+  "id": String,
+  "ttl": Number,
+  "created": Date,
+  "userId": String
+}
+</code></pre><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
+  "id": "1234567890",
+  "ttl": 10000,
+  "created": "1977-07-10T14:14:27.914Z",
+  "userId": "0987654321"
+}</code></pre></div></div></div></div></div></div></div></div></div></div></div></div><div class="col-md-3"><div id="sidebar" class="hidden-print affix" role="complementary"><ul class="nav nav-pills nav-stacked"><li><a href="#location_container">Containers endpoint.</a></li><li><a href="#location_usages">Usages endpoint.</a></li><li><a href="#location_consumers">Consumers (Clients)</a></li><li><a href="#location_ids">Customer IDS</a></li><li><a href="#users">Users (API)</a></li></ul></div></div></div></div></body></html>

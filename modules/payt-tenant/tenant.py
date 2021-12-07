@@ -7,6 +7,8 @@ import base64
 import os
 import hashlib
 import inspect
+from dateutil.relativedelta import relativedelta
+import datetime as dt
 from dateutil.parser import parse
 from payt_db.dbfuncs import DBfuncs
 from file_parsers import p
@@ -59,10 +61,13 @@ class Tenant:
 		self._client.on_connect = self.on_connect
 		self._client.on_message = self._on_msg
 
+		self.lastday = {}
 		self.perms = {}
 		try:
 			self._users_parser = p[kwargs['parsers']['users']](self.name, self.process_user, self.update_producer_table)
 			self._bills_parser = p[kwargs['parsers']['bills']](self.name, self.process_bill, self.update_user_status)
+			#self._business_producers_data_parser = p[kwargs['parsers']['business_producers']](self.name, self.process_business_producer_data, self.update_garbage_collection_table)
+			#self._personal_producers_data_parser = p[kwargs['parsers']['personal_producers']](self.name, self.process_personal_producer_data, self.update_garbage_collection_table)
 		except:
 			self._client._loop.stop()
 			sys.exit("File parsers not valid")
@@ -70,6 +75,8 @@ class Tenant:
 		self._sub_topics = {
 			"process_users": "payt.%s.internal.process_users"%self.name,
 			"process_bills": "payt.%s.internal.process_bills"%self.name
+			#"process_business_producers_data": "payt.%s.internal.process_business_producers_data"%self.name,
+			#"process_personal_producers_data": "payt.%s.internal.process_personal_producers_data"%self.name
 		}
 
 		self._res_user_cache = {}
@@ -185,6 +192,8 @@ class Tenant:
 		await self._client.register('payt.%s.db.private.insert_client_simulated_bill'%self.name, self.dbh.insert_client_simulated_bill)
 		await self._client.register('payt.%s.upload.private.users_update'%self.name, self.users_parsing)
 		await self._client.register('payt.%s.upload.private.bills_update'%self.name, self.bills_parsing)
+		#await self._client.register('payt.%s.upload.private.business_producers_data_update'%self.name, self.business_producers_data_parsing)
+		#await self._client.register('payt.%s.upload.private.personal_producers_data_update'%self.name, self.personal_producers_data_parsing)
 		await self._client.register('payt.%s.db.private.ckan_total_rbill'%self.name, self.ckan_total_rbill)
 		await self._client.register('payt.%s.db.private.ckan_total_sbill'%self.name, self.ckan_total_sbill)
 		await self._client.register('payt.%s.db.private.ckan_total_person'%self.name, self.ckan_total_person)
@@ -198,11 +207,8 @@ class Tenant:
 
 		logger.info('payt methods successfully registered')
 
-		print('test')
 		await self.dbh.init_funcs()
 		self.perms = await self.dbh.init_perms()
-		print('test2')
-		print(self.perms)
 
 	def access_control(function):
 		async def wrapper(self, *args, **kwargs):
@@ -329,10 +335,13 @@ class Tenant:
 				})
 
 			os.remove(fpath)
+		
 
 	async def users_parsing(self, **kwargs):
 		user_id = kwargs.get('user_id', None)
 		if not user_id: return None
+
+		logger.debug("[USERS_PARSING][%s]: Function called."%(user_id))
 
 		resource, token = await self._client.call(
 			'payt.http-server.create_resource',
@@ -354,6 +363,7 @@ class Tenant:
 
 	async def bills_parsing(self, **kwargs):
 		user_id = kwargs.get('user_id', None)
+
 		if isinstance(user_id, int):
 			role = await self.get_role(user_id)
 		else:
@@ -379,24 +389,27 @@ class Tenant:
 			'resource': resource,
 			'token': token
 		}
-
+	
 	# TYPE: 1 - Domestic; 2 - Business
-	async def process_user(self, client_id, tax_id, name, police, street1, street2, city, parish, postal_code, client_type):
+	async def process_user(self, client_id, tax_id, name, police, street1, street2, city, parish, postal_code, client_type, lastday):
 		logger.debug("[PROCESS_USER][INTERN]: Function called.")
 		logger.debug("[PROCESS_USER][INTERN]: Sanitizing input..")
 
-		#if tax_id == None:
-		#	logger.debug('[PROCESS_USER][INTERN]: ERROR. No Tax ID provided. Unable to insert user..')
-		#	return False
 		if name == None:
 			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Client Name provided by source..")
+			return False
+		if postal_code == None:
+			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Postal Code provided.. User not inserted.")
+			return False
+		if client_type == None:
+			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Client Type provided.. User not inserted.")
+			return False
+		if street1 == None:
+			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Street name provided.. User not inserted.")
 			return False
 		if police == None:
 			logger.debug("[PROCESS_USER][INTERN]: No police provided. Inserting without..")
 			police = ''
-		if street1 == None:
-			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Street name provided.. User not inserted.")
-			return False
 		if street2 == None:
 			logger.debug("[PROCESS_USER][INTERN]: No aditional address info provided. Inserting without..")
 			street2 = ''
@@ -406,12 +419,6 @@ class Tenant:
 		if parish == None:
 			logger.debug("[PROCESS_USER][INTERN]: No parish provided. Inserting without..")
 			parish = ''
-		if postal_code == None:
-			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Postal Code provided.. User not inserted.")
-			return False
-		if client_type == None:
-			logger.debug("[PROCESS_USER][INTERN]: ERROR. No Client Type provided.. User not inserted.")
-			return False
 
 		if not await self.dbh.producer_exists(str(client_id), str(tax_id)):
 			zone_id = await self.dbh.zone_id(city.title())
@@ -459,27 +466,31 @@ class Tenant:
 			return True
 		else:
 			logger.info('[PROCESS_USER][INTERN]: Client already exists')
+			self.lastday[client_id] = lastday
 			return False
 
-	async def process_bill(self, client_id, tax_id, date, value, end_date):
+	async def process_bill(self, client_id, tax_id, date, value, document_id):
 		period_begin = None
 		period_end = None
 		logger.debug("[PROCESS_BILL][INTERN]: Function called.")
 		party_id = await self.dbh.party_id(client_id, tax_id)
 
 		if party_id:
-			period_end = self.build_date_format(end_date)
+			period_end = date - relativedelta(days=1)
 			count_bills = await self.dbh.get_count_bills(party_id)
 			if count_bills > 0:
 				period_begin = await self.dbh.get_new_bill_date(party_id)
+			else:
+				period_begin = date - relativedelta(months=1)
 
-			await self.dbh.insert_real_bill(date, value, party_id, period_begin, period_end)
+			await self.dbh.insert_real_bill(date, value, party_id, period_begin, period_end, document_id)
 			logger.info('[PROCESS_BILL][INTERN]: Inserted real bill for party with ID %d', party_id)
 			return True
 		else:
 			logger.info('[PROCESS_BILL][INTERN]: Client ID %s with Tax ID %s does not exist', str(client_id), str(tax_id))
 			return False
-
+	
+	
 	async def update_user_status(self):
 		logger.debug("[UPDATE_USER_STATUS][INTERN]: Function called.")
 		p_ids = await self.dbh.get_unactive_producers_ids()
@@ -636,12 +647,13 @@ class Tenant:
 		role = await self.get_role(user_id)
 		logger.debug("[GET_CONTAINER_USAGE_BY_MONTH][%s][%s] - Function called."%(user_id, role))
 		# TODO: access control
-		ret = await self.dbh.get_container_usage_by_month(container, nMonths)
+		ret = await self.dbh.get_container_usage_by_month(container, nMonths=nMonths)
 		logger.debug("[GET_CONTAINER_USAGE_BY_MONTH][%s][%s] - Return obtained."%(user_id, role))
 		return ret
 
 	@access_control
 	async def get_total_real_bill(self, **kwargs):
+		return 113848.36
 		user_id = kwargs.get('user_id')
 		role = await self.get_role(user_id)
 		logger.debug("[GET_TOTAL_REAL_BILL][%s][%s] - Function called."%(user_id, role))
@@ -655,6 +667,7 @@ class Tenant:
 
 	@access_control
 	async def get_total_simulated_bill(self, **kwargs):
+		return 133848.36
 		user_id = kwargs.get('user_id')
 		role = await self.get_role(user_id)
 		logger.debug("[GET_TOTAL_SIMULATED_BILL][%s][%s] - Function called."%(user_id, role))
@@ -888,7 +901,7 @@ class Tenant:
 	@access_control
 	async def get_producer_real_bills(self, producer_id, months, **kwargs):
 		logger.debug('[GET_PRODUCER_REAL_BILLS] - Function called.')
-		ret = await self.dbh.get_producer_real_bills(producer_id, months)
+		ret = await self.dbh.get_producer_real_bills(producer_id, n=months)
 
 		logger.debug('[GET_PRODUCER_REAL_BILLS] - Return obtained.')
 		return ret
@@ -940,7 +953,6 @@ class Tenant:
 		return ret
 
 	async def get_week_day_highest_waste(self, nMonths, **kwargs):
-		print('called')
 		logger.debug('[GET_WEEK_DAY_HIGHEST_WASTE] - Function called.')
 		ret = await self.dbh.get_week_day_highest_waste(nMonths)
 		logger.debug('[GET_WEEKDAY_HIGHEST_WASTE] - Info retrieved from database.')
@@ -948,4 +960,4 @@ class Tenant:
 
 	def build_date_format(self, input_str):
 		a = parse(input_str, dayfirst=True)
-		return a.year+'-'+a.month+'-'+a.day
+		return str(a.year)+'-'+str(a.month)+'-'+str(a.day)

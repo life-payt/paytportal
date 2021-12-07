@@ -10,7 +10,7 @@ def set_logger(name):
 	global logger
 	logger = logging.getLogger(name+'.csv_parser')
 
-HEADERS = ['N.º Cliente', 'Contribuinte', 'Nome', 'Policia', 'Rua', 'Andar', 'Localidade', 'Freguesia', 'Cod.postal', 'Classe consumo']
+HEADERS = ['NumeroCliente', 'Contribuinte', 'Nome', 'Policia', 'Rua', 'Andar', 'Localidade', 'Freguesia', 'Cod.postal', 'Classe consumo', 'UltimoDiaFaturado']
 EXCLUDE = ['A.']
 DELIMITER = ';'
 
@@ -30,6 +30,21 @@ class csv_001(object):
 		self._update_callback = update_callback
 		set_logger(name)
 		self._loop = asyncio.get_event_loop()
+		self._exclusions = self._load_exclusions()
+
+	def _load_exclusions(self):
+		data = []
+		try:
+			f = open('/tenant/file_parsers/exclusions', 'r')
+			x = f.read().splitlines()
+			f.close()
+		except:
+			return data
+
+		for i in x:
+			data.append(i)
+		return data
+
 
 	def _process(self, filename):
 		logger.debug('_process called.')
@@ -118,9 +133,13 @@ class csv_001(object):
 			return count, "invalid_format"
 
 		for x in data:
-			if await self._callback(*x):
-				logger.debug('Count + 1')
-				count +=1
+			if x[8] not in self._exclusions and ("1" in x[9] or "2" in x[9]):
+				if await self._callback(*x):
+					logger.debug('Count + 1')
+					count +=1
+			else:
+				logger.debug('Client excluded..')
+
 		await self._update_callback()
 		logger.debug('All processed. %s data entries.'%count)
 		return count, None

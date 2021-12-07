@@ -78,6 +78,17 @@ CREATE TABLE authdb.functions (
     operation   varchar(20)     not null
 );
 
+CREATE TABLE authdb.api_users (
+    id          serial,
+    email       varchar(50)     not null,
+    username    varchar(50)     not null unique,
+    county      varchar(20),
+    userid      varchar(80)
+);
+
+ALTER TABLE ONLY authdb.api_users
+    ADD CONSTRAINT api_users_pkey PRIMARY KEY (id);
+
 ALTER TABLE ONLY authdb.policies
     ADD CONSTRAINT policies_pkey PRIMARY KEY (id);
 
@@ -152,7 +163,13 @@ INSERT INTO authdb.roles VALUES (1, 'admin');
 INSERT INTO authdb.roles VALUES (2, 'county');
 INSERT INTO authdb.roles VALUES (3, 'user');
 
-INSERT INTO authdb.counties VALUES (1, 'test_tenant');
+INSERT INTO authdb.counties VALUES (1, 'aveiro');
+INSERT INTO authdb.counties VALUES (2, 'lisbon');
+INSERT INTO authdb.counties VALUES (3, 'caoli');
+------
+INSERT INTO authdb.counties VALUES (4, 'condeixa');
+INSERT INTO authdb.counties VALUES (5, 'larnaka');
+INSERT INTO authdb.counties VALUES (6, 'vrilissia')
 	
 insert into authdb.validation_status values(0, 'unvalidated');	
 insert into authdb.validation_status values(1, 'validated');	

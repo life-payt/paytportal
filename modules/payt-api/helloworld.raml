@@ -1,0 +1,554 @@
+#%RAML 1.0
+title: LIFE PAYT # required title
+version: 1
+baseUri: http://api.life-payt.eu/api
+protocols: [ HTTPS ]
+
+documentation:
+  - title: Welcome
+    content: |
+       Welcome to the LIFE PAYT API Documentation. In order to use it propeprly 
+       replace *location* with your location name in the request string. 
+       E.G: 'aveiro-container' or 'condeixa-container'. 
+       Otherwise it will not work and you will get a 'Not Authorized' Message.
+
+securitySchemes:
+  simple_token:
+      displayName: Access Token
+      description: Security token which has to be provided in the header. This can be obtained by the resource 'access_token'.
+      type: x-simple_token
+      describedBy:
+        headers:
+          Authorization:
+            description: |
+              Security token you have to provide in the header of the request.
+            type: string
+
+/location-container: # optional resource
+  displayName: Containers endpoint.
+  description: Endpoint where containers can be requested or posted.
+
+  get:
+    securedBy: [ simple_token ]
+    description: Gets all identifiers available in this endpoint.
+    body:
+      application/json:
+        example: |
+          curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_container?access_token=YOUR_ACCESS_TOKEN
+
+    responses:
+      200: # HTTP status code
+        description: Return of all usages in database.
+        body: # declare content of response
+          application/json: # media type
+            type: Array of json
+            example: # example how a response looks like
+              [ {
+                  "id": "1234567890",
+                  "latitude": "40.00000",
+                  "longitude": "-23.0000'",
+                  "capacity": 500000
+              }]
+
+  post:
+      securedBy: [ simple_token ]
+      description: |
+        Endpoint to add a new client to the databases.
+      queryParameters:
+        id: 
+          description: Unique identifier for a container. This has to be mantained by each municipality. We take no responsibility for duplicates.
+          required: true
+          type: String
+        latitude: 
+          description: Latitude of the location of the container.
+          type: String
+          required: false
+        longitude: 
+          description: Longitude of the location of the container.
+          type: String
+          required: false
+        capacity:
+          description: Capacity of the container.
+          type: Number
+          required: false
+      body:
+        application/json:
+          example: |
+            curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d 
+            '{ \ 
+                "id": "1234567890", \
+                "latitude": "40.00000", \
+                "longitude": "-23.0000'", \
+                "capacity": 500000 \
+             }' 
+             'http://api.life-payt.eu/api/location_container?access_token=YOUR_ACCESS_TOKEN'
+          type: Consumer
+      responses:
+        200:
+          description: Post successful. As response you receive the data that has been sent.
+          body:
+            application/json:
+              example: |
+                  {
+                    "id": "1234567890",
+                    "latitude": "40.00000",
+                    "longitude": "-23.0000'",
+                    "capacity": 500000
+                  }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+
+/location-usages: # optional resource
+  displayName: Usages endpoint.
+  description: Endpoint where container usages by clients can be requested or posted.
+
+  get:
+    securedBy: [ simple_token ]
+    description: Gets all identifiers available in this endpoint.
+    body:
+      application/json:
+        example: |
+          curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_usages?access_token=YOUR_ACCESS_TOKEN
+
+    responses:
+      200: # HTTP status code
+        description: Return of all usages in database.
+        body: # declare content of response
+          application/json: # media type
+            type: Array of json
+            example: # example how a response looks like
+              [ {
+                  "id": "1234567890",
+                  "producer": "consumer_id/identifier of client",
+                  "timestamp": "2019-07-10T13:23:36.503Z",
+                  "container": "container_id"
+              }]
+
+  post:
+      securedBy: [ simple_token ]
+      description: |
+        Endpoint to add a new client to the databases.
+      queryParameters:
+        id: 
+          description: Unique identifier for a usage. This has to be mantained by each municipality. We take no responsibility for duplicates.
+          required: true
+          type: String
+        producer: 
+          description: Identification of the producer. Can be the identifier used or the client identifier.
+          type: String
+          required: true
+        timestamp: 
+          description: Usage timestamp.
+          type: Date
+          required: true
+        container:
+          description: Identification of the container where the usage was made.
+          type: String
+          required: true
+      body:
+        application/json:
+          example: |
+            curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d 
+            '{ \ 
+                "id": "1234567890", \
+                "producer": "consumer_id/identifier of client", \
+                "timestamp": "2019-07-10T13:23:36.503Z", \
+                "container": "container_id" \
+             }' 
+             'http://api.life-payt.eu/api/location_usages?access_token=YOUR_ACCESS_TOKEN'
+          type: Consumer
+      responses:
+        200:
+          description: Post successful. As response you receive the data that has been sent.
+          body:
+            application/json:
+              example: |
+                  {
+                    "id": "1234567890",
+                    "producer": "consumer_id/identifier of client",
+                    "timestamp": "2019-07-10T13:23:36.503Z",
+                    "container": "container_id"
+                  }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+  /{id}:
+    displayName: Specific consumer (client).
+    description: Returns the specific user based on its id. Replace _ID_ with the pretended object ID.
+
+    get:
+      securedBy: [ simple_token ]
+      body:
+        application/json:
+          example: |
+            curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_usages/_ID_?access_token=YOUR_ACCESS_TOKEN
+
+      responses:
+        200: # HTTP status code
+          description: Return specific usage from database.
+          body: # declare content of response
+            application/json: # media type
+              type: json
+              example: # example how a response looks like
+                {
+                  "id": "1234567890",
+                  "producer": "consumer_id/identifier of client",
+                  "timestamp": "2019-07-10T13:23:36.503Z",
+                  "container": "container_id"
+                }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+
+/location-consumers: # optional resource
+  displayName: Consumers (Clients)
+  description: Consumers endpoint where clients can be requested or posted.
+
+  get:
+    securedBy: [ simple_token ]
+    description: Gets all consumers available in this endpoint.
+    body:
+      application/json:
+        example: |
+          curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/aveiro_consumers?access_token=YOUR_ACCESS_TOKEN
+
+    responses:
+      200: # HTTP status code
+        description: Return of all Consumers in database.
+        body: # declare content of response
+          application/json: # media type
+            type: Array of json
+            example: # example how a response looks like
+              [ {
+                "id": "1234567890ABC",
+                "name": "Fake User",
+                "address": "Fake Street 1",
+                "zip": "0000-123",
+                "location": "Fake Town",
+                "nif": "1234567890",
+                "idnumber": "1232435678",
+              } ]
+
+  post:
+      securedBy: [ simple_token ]
+      description: |
+        Endpoint to add a new client to the databases.
+      queryParameters:
+        id: 
+          description: Unique identifier for a client. This has to be mantained by each municipality. We take no responsibility for duplicates.
+          required: true
+          type: String
+        name: 
+          description: Full name of the Client.
+          required: true
+          type: String
+        address: 
+          description: Client address.
+          required: true
+          type: String
+        zip: 
+          description: Zip code of the client address.
+          required: true
+          type: String
+        location: 
+          description: Location.
+          type: String
+          required: true
+        nif: 
+          description: Tax number.
+          type: String
+          required: true
+        idnumber: 
+          description: Identification card number.
+          type: String
+          required: true
+      body:
+        application/json:
+          example: |
+            curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d 
+            '{ \ 
+               "id": "string", \ 
+               "name": "string", \ 
+               "address": "string", \ 
+               "zip": "string", \ 
+               "location": "string", \ 
+               "nif": "string", \ 
+               "idnumber": "string" \ 
+             }' 
+             'http://api.life-payt.eu/api/aveiro_consumers?access_token=YOUR_ACCESS_TOKEN'
+          type: Consumer
+      responses:
+        200:
+          description: Post successful. As response you receive the data that has been sent.
+          body:
+            application/json:
+              example: |
+                {
+                  "id": "rsdtfghbjn",
+                  "name": "string",
+                  "address": "string",
+                  "zip": "string",
+                  "location": "string",
+                  "nif": "string",
+                  "idnumber": "string"
+                }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+  /{id}:
+    displayName: Specific consumer (client).
+    description: Returns the specific user based on its id.
+
+    get:
+      securedBy: [ simple_token ]
+      body:
+        application/json:
+          example: |
+            curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_consumers/_ID_?access_token=YOUR_ACCESS_TOKEN
+
+      responses:
+        200: # HTTP status code
+          description: Return specific Consumers in database.
+          body: # declare content of response
+            application/json: # media type
+              type: json
+              example: # example how a response looks like
+                {
+                  "id": "_ID_",
+                  "name": "Fake User",
+                  "address": "Fake Street 1",
+                  "zip": "0000-123",
+                  "location": "Fake Town",
+                  "nif": "1234567890",
+                  "idnumber": "1232435678",
+                }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+
+/location-ids: # optional resource
+  displayName: Customer IDS
+  description: Ids endpoint where client identifiers can be requested or posted.
+
+  get:
+    securedBy: [ simple_token ]
+    description: Gets all identifiers available in this endpoint.
+    body:
+      application/json:
+        example: |
+          curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_ids?access_token=YOUR_ACCESS_TOKEN
+
+    responses:
+      200: # HTTP status code
+        description: Return of all identifiers in database.
+        body: # declare content of response
+          application/json: # media type
+            type: Array of json
+            example: # example how a response looks like
+              [ {
+                  "id": "1234567890",
+                  "start": "2019-07-10T13:00:00.000Z",
+                  "end": "2019-07-11T13:00:00.000Z"
+              } ]
+
+  post:
+      securedBy: [ simple_token ]
+      description: |
+        Endpoint to add a new client to the databases.
+      queryParameters:
+        id: 
+          description: Unique identifier for a identifier. This has to be mantained by each municipality. We take no responsibility for duplicates.
+          required: true
+          type: String
+        start: 
+          description: Date of activation.
+          type: String
+          required: false
+        end: 
+          description: Date of deactivation.
+          type: String
+          required: false
+      body:
+        application/json:
+          example: |
+            curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d 
+            '{ \ 
+               "id": "string", \ 
+               "start": "date", \ 
+               "end": "date" \ 
+             }' 
+             'http://api.life-payt.eu/api/location_ids?access_token=YOUR_ACCESS_TOKEN'
+          type: Consumer
+      responses:
+        200:
+          description: Post successful. As response you receive the data that has been sent.
+          body:
+            application/json:
+              example: |
+                  {
+                    "ext_id": String,
+                    "start": Date,
+                    "end": Date
+                  }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+  /{id}:
+    displayName: Specific consumer (client).
+    description: Returns the specific user based on its id. Replace _ID_ with the pretended object ID.
+
+    get:
+      securedBy: [ simple_token ]
+      body:
+        application/json:
+          example: |
+            curl -X GET --header 'Accept: application/json' 'http://api.life-payt.eu/api/location_ids/_ID_?access_token=YOUR_ACCESS_TOKEN
+
+      responses:
+        200: # HTTP status code
+          description: Return specific identifier from database.
+          body: # declare content of response
+            application/json: # media type
+              type: json
+              example: # example how a response looks like
+                {
+                  "id": "_ID_",
+                  "start": "",
+                  "end": ""
+                }
+        401:
+          description: User is not authorized to access or has not logged in.
+          body:
+            application/json:
+              example: |
+                {
+                  "error": {
+                    "statusCode": 401,
+                    "name": "Error",
+                    "message": "Authorization Required",
+                    "code": "AUTHORIZATION_REQUIRED",
+                    "stack": "Some long message. Not relevant."
+                  }
+                }
+
+
+
+/Users:
+  displayName: Users (API)
+  description: Endpoint for user login that returns the access token.
+
+  /login:
+    description: Returns ID. To get your identifier call /Users/login with your credentials in a object with username and password.
+    post:
+      description: This method returns upon correct credentials the access token of the user necessary for procteted endpoints.
+      body:
+        example: |
+            curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d 
+            '{ \ 
+               "username": "testuser", \ 
+               "password": "000000" \ 
+             }' 
+             'https://api.life-payt.eu/api/Users/login'
+      queryParameters:
+        credentials:
+          type: json 
+          example:
+            {
+              "username": "testuser",
+              "password": "00000"
+            }
+
+      responses:
+        200:
+          description: Copy the "id" field for using as access token for further actions.
+          body:
+            application/json:
+              type: |
+                {
+                  "id": String,
+                  "ttl": Number,
+                  "created": Date,
+                  "userId": String
+                }
+
+              example:
+                {
+                  "id": "1234567890",
+                  "ttl": 10000,
+                  "created": "1977-07-10T14:14:27.914Z",
+                  "userId": "0987654321"
+                }
+

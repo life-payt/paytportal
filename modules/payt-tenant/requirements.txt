@@ -1,6 +1,6 @@
 aiopg
 unidecode
-openpyxl
+openpyxl==2.5.9
 chardet
 py-dateutil
 aiomcache
@@ -8,3 +8,5 @@ aiohttp
 xlrd
 xlsxwriter
 ckanapi
+numpy
+pandas

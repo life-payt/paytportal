@@ -1,7 +1,5 @@
 #!/bin/sh
 
-if [ "$1" == "production" ] ; then
-	unzip server-application/node_modules.zip
-fi
+cd "$(dirname "$0")"
 
 docker build -t payt-api .

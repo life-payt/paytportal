@@ -55,7 +55,7 @@ class Manager:
 
 		with open(filepath, 'rb') as f:
 			content = base64.b64encode(f.read())
-			d = {'name': filename, 'content': content, 'resource': resource_id}
+			d = {'name': filename, 'content': content.decode('utf-8'), 'resource': resource_id}
 			await self._client.publish(resource['reply_to'][0], d, resource['reply_to'][1])
 			await cache.delete(resource_id)
 			os.remove('/tmp/payt/'+resource_id)

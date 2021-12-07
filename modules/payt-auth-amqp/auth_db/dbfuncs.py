@@ -396,6 +396,12 @@ class DBfuncs(object):
 		logger.debug('[GET_MASTERKEY] - Info retrieved from database.')
 		return ret[0][0]
 
+	async def set_masterkey(self, user, masterhashed):
+		logger.debug('[SET_MASTERKEY] - Function called.')
+		ret = await self._execute(QUERIES['SET_MASTER'], [masterhashed, user])
+		logger.debug('[SET_MASTERKEY] - Info updated in database.')
+		return ret
+
 	async def service_exists(self, service):
 		logger.debug('[SERVICE_EXISTS] - Function called.')
 		ret = await self._execute(QUERIES['GET_SERVICE'], [service])
@@ -617,12 +623,20 @@ class DBfuncs(object):
 		funcs_tmp = await self._execute(QUERIES['GET_ALL_FUNCS_'])
 		logger.debug('[INIT_PERMS] - Info retrieved from database.')
 
+
 		for x in fields_tmp:
-			fields[x[0]] = x[1]
+			print(x)
+			if x[1] == None:
+				fields[x[0]] = 'public'
+			else:
+				fields[x[0]] = x[1]
 
 		for z in funcs_tmp:
 			if z[1]:
-				perms[z[0]] = fields[z[1]]+'-'+z[2]
+				if z[2]:
+					perms[z[0]] = fields[str(z[1])]+'-'+str(z[2])
+				else:
+					perms[z[0]] = fields[z[1]]+'-'+'w'
 			else:
 				perms[z[0]] = 'public-'+z[2]
 		logger.debug('[INIT_PERMS] - Return object built.')
@@ -647,3 +661,39 @@ class DBfuncs(object):
 			await self._execute(QUERIES['INSERT_FUNC'], [func,ret,op])
 
 		logger.debug('[INIT_FUNCS] - Functions added to database.')
+
+	async def get_api_users(self, limit=None, offset=None):
+		logger.debug('[GET_API_USERS] - Function called.')
+
+		raw_data = await self._execute(QUERIES['GET_API_USERS'], [limit, offset])
+		logger.debug('[GET_API_USERS] - Info retrieved from database.')
+
+		count = await self._execute(QUERIES['GET_COUNT_APIU'])
+		ret = {}
+		data = {}
+		for i in range(0, len(raw_data)):
+			user = {}
+			user['email'] = raw_data[i][1]
+			user['username'] = raw_data[i][2]
+			user['county'] = raw_data[i][3]
+			user['ext_uid'] = raw_data[i][4]
+			print(user)
+			data[raw_data[i][0]] = user
+
+		ret['totalDataSize'] = count[0][0]
+		ret['data'] = data
+
+		logger.debug('[GET_API_USERS] - Return object built.')
+		return ret
+
+	async def insert_api_user(self, username, email, county, ext_uid):
+		logger.debug('[INSERT_API_USER] - Function called.')
+
+		print(username)
+		print(email)
+		print(county)
+		await self._execute(QUERIES['INSERT_API_USERS'], [email, username, county, ext_uid])
+
+		logger.debug('[INSERT_API_USER] - Info added to database.')
+
+		return 1

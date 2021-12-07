@@ -7,8 +7,8 @@ QUERIES = {
 						""",
 
 	'INSERT_GARBAGE':	"""
-							insert into payt.garbage_collection (collection_ts, card, container)
-							values (%s,%s,%s)
+							insert into payt.garbage_collection (collection_ts, card, container, counter) values (%s, %s, %s, %s) 
+							on conflict on constraint unique_usage do update set counter = garbage_collection.counter+%s 
 						""",
 
 
@@ -59,6 +59,12 @@ QUERIES = {
 							values (%s,%s,%s,%s,%s,%s,%s)
 						""",
 
+	'UPDATE_CONTAINER':	"""
+							update payt.container
+							set capacity=%s, deposit_volume=%s, lat=%s, long=%s
+							where cb_id=%s
+						""",
+
 	'GET_CONT_ID':		"""
 							select container_id 
 							from payt.container
@@ -78,7 +84,7 @@ QUERIES = {
 
 	'CONTAINER_EXISTS':	"""
 							select count(cb_id) from payt.container
-							where cb_id=%s
+							where container_id=%s
 						""",
 
 	'INSERT_P_CARD':	"""
@@ -103,8 +109,8 @@ QUERIES = {
 						""",
 
 	'INSERT_REAL_BILL':	"""
-							insert into payt.real_bill (issue_date, value, party, period_begin, period_end)
-							select %s, round(%s, 2), %s, %s, %s
+							insert into payt.real_bill (issue_date, value, party, period_begin, period_end, document_id)
+							select %s, round(%s, 2), %s, %s, %s, %s
 							where
 								not exists (
 									select rbill_id 
@@ -114,6 +120,7 @@ QUERIES = {
 										and party=%s
 										and period_begin=%s
 										and period_end=%s
+										and document_id=%s
 								);
 						""",
 
@@ -251,6 +258,11 @@ QUERIES = {
 							from payt.producer_cards
 							where pi_ci=%s
 						""",
+	'GET_CARD':			"""
+							select card
+							from payt.producer_card
+							where producer=%s
+						""",
 
 	'PRODUCER_ZONE':	"""
 							select zone 
@@ -259,7 +271,7 @@ QUERIES = {
 						""",
 
 	'PARTY_TYPE':		"""
-							select person,business,type_name as type
+							select person,business,type_name as type, redirect
 							from payt.users
 								join payt.user_type on type = type_id
 							where user_id=%s
@@ -303,12 +315,13 @@ QUERIES = {
 						""",
 
 	'CARD_MONTH_WASTE':"""
-							select date_trunc('month', collection_ts) AS c_month, repr_char as waste_type, sum(deposit_volume)
+							with temp as (select date_trunc('month', collection_ts) AS c_month, repr_char as waste_type, deposit_volume*sum(counter) as total_deposit
 							from payt.garbage_collection
 								join payt.container on container = container_id
 								join payt.waste_type on waste_type = waste_type_id
 							where card=%s and collection_ts::date >= %s{0}
-							group by c_month, repr_char
+							group by c_month, repr_char, deposit_volume)
+							select c_month, waste_type, sum(total_deposit) from temp group by c_month, waste_type;
 						""",
 
 	'CONTAINER_MONTH_WASTE':"""
@@ -322,85 +335,87 @@ QUERIES = {
 						""",
 
 	'PRODUCER_REAL_BILL':"""
-							select issue_date, value, period_begin, period_end
+							select payt.real_bill.issue_date, payt.real_bill.value, payt.real_bill.period_begin, payt.real_bill.period_end
 							from payt.real_bill join payt.producer_party on party=pp_id
-							where ended is null and producer=%s and issue_date::date >= %s
-							order by issue_date desc
+							where producer=%s
+							order by period_begin desc
 							fetch first 1 rows only
 						""",
 
 	'PRODUCER_SIMULATED_BILL':"""
-							select issue_date, value
+							select payt.simulated_bill.issue_date, payt.simulated_bill.value, payt.simulated_bill.period_begin, payt.simulated_bill.period_end
 							from payt.simulated_bill join payt.producer_party on party=pp_id
-							where ended is null and producer=%s and issue_date::date >= %s
-							order by issue_date desc
+							where producer=%s
+							order by period_begin desc
 							fetch first 1 rows only
 						""",
 
 	'PRODUCER_REAL_BILLS':"""
-							select issue_date, value, period_begin, period_end
+							select payt.real_bill.issue_date, payt.real_bill.value, payt.real_bill.period_begin, payt.real_bill.period_end
 							from payt.real_bill join payt.producer_party on party=pp_id
-							where ended is null and producer=%s and issue_date::date >= %s
+							where period_end is not null and producer=%s
+							order by period_begin desc
+							fetch first %s rows only
 						""",
 
 	'PRODUCER_SIMULATED_BILLS':"""
-							select issue_date, value
+							select payt.simulated_bill.issue_date, payt.simulated_bill.value, payt.simulated_bill.period_begin, payt.simulated_bill.period_end
 							from payt.simulated_bill join payt.producer_party on party=pp_id
-							where ended is null and producer=%s and issue_date::date >= %s
+							where period_end is not null and producer=%s
+							order by period_begin desc
+							fetch first %s rows only
 						""",
 
 	'CARD_DAY_AVERAGE':"""
-							select repr_char as waste_type, round(avg(day_total),2)
-							from (	select date_trunc('day', collection_ts) "day", repr_char, sum(deposit_volume) as day_total
+							select repr_char as waste_type, round(sum(day_total)/%s{2},2)
+							from (	select date_trunc('day', collection_ts) "day", repr_char, deposit_volume*sum(counter) as day_total
 									from payt.garbage_collection
 										join payt.container on container = container_id
 										join payt.waste_type on waste_type = waste_type_id
-									where card=%s and collection_ts::date >= %s{0}
-									group by day, repr_char) s1
+									where card=%s and collection_ts::date >= %s{0} and collection_ts::date <= %s{1}
+									group by day, repr_char, deposit_volume) s1
 							group by waste_type
 						""",
 
 	'CARD_ZONE_DAY_AVERAGE':"""
-							select waste_type, round(avg(producer_average),2)	
-							from (	select producer, waste_type, avg(day_total) as producer_average 
-									from (	select producer, repr_char as waste_type, date_trunc('day', collection_ts) "day", sum(deposit_volume) as day_total 
-											from payt.garbage_collection 
-												join payt.container on container = container_id
-												join payt.producer_card on payt.garbage_collection.card = payt.producer_card.card
-												join payt.producer on producer = producer_id
-												join payt.waste_type on waste_type = waste_type_id
-											where payt.garbage_collection.card is not null and zone=%s and collection_ts::date >= %s{0}
-											group by day, producer, repr_char) s1 
-									group by producer, waste_type) s2
+							select waste_type, round(sum(day_total)/%s,2)	
+							from (	select  producer, repr_char as waste_type, date_trunc('day', collection_ts) "day", deposit_volume*sum(counter) as day_total 
+									from payt.garbage_collection 
+										join payt.container on container = container_id
+										join payt.producer_cards on payt.garbage_collection.card = payt.producer_cards.card
+										join payt.producer_card on pi_ci = payt.producer_card.card
+										join payt.producer on producer = producer_id
+										join payt.waste_type on waste_type = waste_type_id
+									where payt.garbage_collection.card is not null and zone=%s and collection_ts::date >= %s  and collection_ts::date <= %s
+									group by day, producer, repr_char, deposit_volume) s1 
 							group by waste_type
 						""",
 
 	'CONTAINER_DAY_AVERAGE':"""
-							select repr_char as waste_type, round(avg(day_total),2)
+							select repr_char as waste_type, round(sum(day_total)/%s{2},2)
 							from (	select date_trunc('day', collection_ts) "day", repr_char, sum(capacity) as day_total
 									from 	payt.garbage_collection
 										join payt.container on container = container_id
 										join payt.waste_type on waste_type = waste_type_id
 										join payt.producer_container on payt.garbage_collection.container = payt.producer_container.container
-									where card is null and producer=%s and collection_ts::date >= %s{0}
+									where card is null and producer=%s and collection_ts::date >= %s{0} and collection_ts::date <= %s{1}
 									group by day, repr_char) s1
 							group by waste_type
 						""",
 
 	'CONTAINER_ZONE_DAY_AVERAGE':"""
-							select waste_type, round(avg(producer_average),2)	
-							from (	select producer, waste_type, avg(day_total) as producer_average 
-									from (	select producer, repr_char as waste_type, date_trunc('day', collection_ts) "day", sum(capacity) as day_total 
-											from payt.garbage_collection 
-											join payt.container on container = container_id
-											join payt.producer_container on payt.garbage_collection.container = payt.producer_container.container
-											join payt.producer on producer = producer_id
-											join payt.waste_type on waste_type = waste_type_id
-											where payt.garbage_collection.card is null and zone=%s and collection_ts::date >= %s{0}
-											group by day, producer, repr_char) s1 
-									group by producer, waste_type) s2
+							select waste_type, round(sum(day_total)/%s,2)	
+							from (	select producer, repr_char as waste_type, date_trunc('day', collection_ts) "day", sum(capacity) as day_total 
+									from payt.garbage_collection 
+										join payt.container on container = container_id
+										join payt.producer_container on payt.garbage_collection.container = payt.producer_container.container
+										join payt.producer on producer = producer_id
+										join payt.waste_type on waste_type = waste_type_id
+									where payt.garbage_collection.card is null and zone=%s and collection_ts::date >= %s and collection_ts::date <= %s
+									group by day, producer, repr_char) s1
 							group by waste_type
 						""",
+						
 	'GET_ALL_PERSON_IDS':	"""
 								SELECT user_id FROM payt.users
 							""",
@@ -420,12 +435,13 @@ QUERIES = {
 								LIMIT 1
 							""",
 	'CARD_WEEK_WASTE':"""
-							select date_trunc('week', collection_ts) AS c_week, repr_char as waste_type, sum(deposit_volume)
-							from payt.garbage_collection
-								join payt.container on container = container_id
-								join payt.waste_type on waste_type = waste_type_id
-							where card=%s and collection_ts::date >= %s{0}
-							group by c_week, repr_char
+							with temp as (select date_trunc('week', collection_ts) AS c_week, repr_char as waste_type, deposit_volume*sum(counter) as total
+														from payt.garbage_collection
+															join payt.container on container = container_id
+															join payt.waste_type on waste_type = waste_type_id
+														where card=%s and collection_ts::date >= %s{0}
+														group by c_week, repr_char, deposit_volume)
+							select c_week, waste_type, sum(total) from temp group by c_week, waste_type
 						""",
 
 	'CONTAINER_WEEK_WASTE':"""
@@ -439,12 +455,13 @@ QUERIES = {
 						""",
 
 	'CARD_DAY_WASTE':"""
-							select date_trunc('day', collection_ts) AS c_day, repr_char as waste_type, sum(deposit_volume)
-							from payt.garbage_collection
-								join payt.container on container = container_id
-								join payt.waste_type on waste_type = waste_type_id
-							where card=%s and collection_ts::date >= %s{0}
-							group by c_day, repr_char
+							with temp as (select date_trunc('day', collection_ts) AS c_day, repr_char as waste_type, deposit_volume*sum(counter) as total
+								from payt.garbage_collection
+									join payt.container on container = container_id
+									join payt.waste_type on waste_type = waste_type_id
+								where card=%s and collection_ts::date >= %s{0}
+								group by c_day, repr_char, deposit_volume)
+							select c_day, waste_type, sum(total) from temp group by c_day, waste_type
 						""",
 
 	'CONTAINER_DAY_WASTE':"""
@@ -458,13 +475,13 @@ QUERIES = {
 						""",
 
 	'CONTAINER_TOTAL_DAY':	"""
-								select count(container)
+								select counter
 								from payt.garbage_collection
 								where container = %s and collection_ts = %s
 							""",
 
 	'CONTAINER_TOTAL_INTERVAL':	"""
-									select count(container)
+									select counter
 									from payt.garbage_collection
 									where container = %s and collection_ts >= %s and collection_ts <= %s
 								""",
@@ -868,8 +885,8 @@ QUERIES = {
 						""",
 
 	'COUNT_BILL_PROD':	"""
-							select count()
-							from payt.real_bills
+							select count(*)
+							from payt.real_bill
 							where party = %s
 						""",
 
@@ -880,6 +897,18 @@ QUERIES = {
 								order by period_end desc
 								fetch first 1 rows only
 							""",
+
+	'GET_LAST_COLLECTION_DATE':	"""
+									SELECT collection_ts
+									FROM payt.garbage_collection
+									ORDER BY collection_ts DESC LIMIT 1
+								""",
+
+	'GET_RBILL_DOC':	"""
+							SELECT document_id
+							FROM payt.real_bill
+							where document_id = %s
+						""",
 }
 
 for KEY in QUERIES:

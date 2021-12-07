@@ -5,7 +5,7 @@ from payt_db.caching import Cache
 from tenant import Tenant
 from file_parsers import p
 from data_workers import w
-#from data_exporters import e
+from data_exporters import e
 
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 

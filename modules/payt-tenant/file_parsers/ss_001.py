@@ -8,7 +8,7 @@ def set_logger(name):
 	global logger
 	logger = logging.getLogger(name+'.ss_parser')
 
-HEADERS = ['NumeroCliente', 'NIF', 'DATA EMISSÃO', 'MONTANTE COM IVA', 'UltimoDiaFaturado']
+HEADERS = ['CLIENTE', 'CONCEITO', 'NIF', 'DATA EMISSÃO', 'MONTANTE COM IVA', 'NR. DOC.', 'MORADA']
 
 def tokenize(s, exclude_terms=[]):
 	if s is None or s == '':
@@ -68,14 +68,15 @@ class ss_001(object):
 		logger.debug('Processing..')
 		count = 0
 		data = await self._loop.run_in_executor(None, self._process, filename)
-
+		processed = {}
 		logger.debug('Data acquired.')
 		
 		if data is None:
 			logger.debug('No data obtained. Invalid Format.')
 			return count, "invalid_format"
 
-		for x in data:
+		cleaned_data = await self.process_data(data)
+		for x in cleaned_data:
 			logger.debug('Data x processed.')
 			if await self._callback(*x):
 				logger.debug('Count + 1')
@@ -85,12 +86,31 @@ class ss_001(object):
 		logger.debug('All processed. %s data entries.'%count)
 		return count, None
 
-	async def get_dates(self, filename):
-		split = filename.split('_')
-		b = split[-3:(len(split)-1)][0]
-		e = split[-3:(len(split)-1)][1]
+	async def process_data(self, data):
+		cleaned = []
+		done = []
 
-		begin = b[:4] + '-' + b[4:6] + '-' + b[6:]
-		end = e[:4] + '-' + e[4:6] + '-' + e[6:]
+		for x in data:
+			if x[0] in done:
+				pass
+			else:
+				done.append(x[0])
+				new = []
+				new.append(x[0])
+				new.append(x[2])
+				new.append(x[3])
+				val2 = await self.get_value(data, x[1], x[5])
+				total = val2 + x[4]
+				new.append(total)
+				new.append(x[5])
 
-		return begin, end
+				cleaned.append(new)
+		return cleaned
+
+
+	async def get_value(self, data, concept, doc):
+		value = [x[4] for x in data if x[1] != concept and x[5] == doc]
+		if value:
+			return value[0]
+		else:
+			return 0

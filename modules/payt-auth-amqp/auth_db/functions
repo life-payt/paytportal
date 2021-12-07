@@ -70,3 +70,12 @@ w
 edit_alias
 users.alias
 w
+get_api_users
+api_users.username
+r
+insert_api_user
+api_users.username
+w
+delete_api_user
+api_users.username
+w

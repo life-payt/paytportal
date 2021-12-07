@@ -254,6 +254,12 @@ QUERIES = {
 							where user_id = %s
 						""",
 
+	'SET_MASTER':		"""
+							update authdb.users
+							set master_ph = %s
+							where user_id = %s
+						""",
+
 	'GET_SERVICE':		"""
 							select count(name)
 							from authdb.services
@@ -423,6 +429,30 @@ QUERIES = {
 	'GET_FIELD_POLIC':	"""
 							select field, polic
 							from authdb.policies
+						""",
+
+	'GET_API_USERS':	"""
+							select * from authdb.api_users
+							order by id
+							limit %s
+							offset %s
+						""",
+
+	'INSERT_API_USERS':	"""
+							insert into authdb.api_users (email, username, county, userid)
+							values (%s, %s, %s, %s)
+							ON CONFLICT (username) DO NOTHING
+						""",
+
+	'UPDATE_API_USERID':	"""
+								update authdb.api_users
+								where where username=%s
+								set userid=%s
+							""",
+
+	'GET_COUNT_APIU':	"""
+							select count(*)
+							from authdb.api_users
 						""",
 
 }

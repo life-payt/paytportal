@@ -105,7 +105,8 @@ class DBfuncs(object):
 	cache.cache_result(60)
 	async def producer_card(self, producer_id):
 		logger.debug('[PRODUCER_CARD] - Function called.')
-		ret = await self._execute(QUERIES['PRODUCER_CARDS'], [producer_id])
+		#ret = await self._execute(QUERIES['PRODUCER_CARDS'], [producer_id])
+		ret = await self._execute(QUERIES['GET_CARD'], [producer_id])
 		logger.debug('[PRODUCER_CARD] - Result retrieved from database.')
 		if not ret: return None
 		return ret
@@ -212,19 +213,23 @@ class DBfuncs(object):
 		logger.debug('[INSERT_USER_BUSINESS] - Info added to database.')
 
 
-	async def insert_garbage(self, timestamp, card, container):
-		logger.debug('[INSERT_GARBAGE] - Function called.')
+	async def insert_garbage(self, timestamp, card, container, counter):
+#		logger.debug('[INSERT_GARBAGE] - Function called.')
 		container_id = await self._execute(QUERIES['GET_CONT_ID'], [container])
 		if type(timestamp) is int:
 			timestamp = dt.datetime.fromtimestamp(timestamp)
-		await self._execute(QUERIES['INSERT_GARBAGE'], [timestamp, card, container_id[0][0]])
-		logger.debug('[INSERT_GARBAGE] - Info added to database.')
+		await self._execute(QUERIES['INSERT_GARBAGE'], [timestamp, card, container_id[0][0], counter, counter])
+#		logger.debug('[INSERT_GARBAGE] - Info added to database.')
 
 
 	async def insert_container(self, capacity, deposit_volume, lat, longt, weekly_collect_days=0, wastetype='I', cb_id=None):
 		logger.debug('[INSERT_CONTAINER] - Function called.')
 		exists = await self._execute(QUERIES['CONTAINER_EXISTS'], [cb_id])
 		if exists[0][0]:
+			logger.debug('[INSERT_CONTAINER] - Container already in database.')
+			logger.debug('[INSERT_CONTAINER] - Updating info...')
+			res = await self._execute(QUERIES['UPDATE_CONTAINER'], [capacity, deposit_volume, lat, longt, cb_id])
+			logger.debug('[INSERT_CONTAINER] - Container Info Updated.')
 			return None
 		ret = await self._execute(QUERIES['GET_WASTE_ID'], [wastetype])
 		if not ret: return None
@@ -239,16 +244,16 @@ class DBfuncs(object):
 
 
 	async def insert_card(self, card):
-		logger.debug('[INSERT_CARD] - Function called.')
+#		logger.debug('[INSERT_CARD] - Function called.')
 		exists = await self._execute(QUERIES['CARD_EXISTS'], [card])
 		if exists[0][0]:
-			logger.debug('[INSERT_CARD] - Card Already in Database.')
+#			logger.debug('[INSERT_CARD] - Card Already in Database.')
 			return None
 		else:
-			logger.debug('[INSERT_CARD] - Card added to database.')
+#			logger.debug('[INSERT_CARD] - Card added to database.')
 			await self._execute(QUERIES['PRODUCE_CARD_LOG_WP'], [card, 'ID Card adicionado ao sistema.'])
 			await self._execute(QUERIES['INSERT_CARD'], [card])
-			logger.debug('[INSERT_CARD] - Card insertion logged to database.')
+#			logger.debug('[INSERT_CARD] - Card insertion logged to database.')
 			return 1
 
 
@@ -339,8 +344,11 @@ class DBfuncs(object):
 		if not ret: return None
 		return ret[0][0]
 
-	async def insert_real_bill(self, issue_date, value, party, period_begin, period_end):
-		await self._execute(QUERIES['INSERT_REAL_BILL'], [issue_date, value, party, period_begin, period_end, issue_date, value, party, period_begin, period_end])
+	async def insert_real_bill(self, issue_date, value, party, period_begin, period_end, document_id):
+		if await self._execute(QUERIES['GET_RBILL_DOC'], [document_id]):
+			logger.debug(['[INSERT_REAL_BILL] - Document already exists.'])
+			return 0
+		await self._execute(QUERIES['INSERT_REAL_BILL'], [issue_date, value, party, period_begin, period_end, document_id, issue_date, value, party, period_begin, period_end, document_id])
 
 	async def insert_client_real_bill(self, client_id, tax_id, party, issue_date, value):
 		party_id = await self.party_id(client_id, tax_id)
@@ -377,9 +385,9 @@ class DBfuncs(object):
 		party = await self._execute(QUERIES['PARTY_TYPE'], [user_id])
 		if not party:
 			return None
-
-		party_info = {'type': party[0][2]}
-
+		
+		party_info = {'type': party[0][2], 'redirect': party[0][3]}
+		
 		if party_info['type'] == 'personal':
 			party_info['id'] = party[0][0]
 			party_info_q = await self._execute(QUERIES['PERSON_INFO'], [party_info['id']])
@@ -439,7 +447,9 @@ class DBfuncs(object):
 	async def get_producer_waste_total(self, producer_id, start_date=None, end_date=None):
 		card = await self.producer_card(producer_id)
 
-		parameters = [start_date if start_date else dt.date.today().replace(day=1)]
+		#parameters = [start_date if start_date else dt.date.today().replace(day=1)]
+		parameters = [start_date if start_date else (dt.date.today().replace(day=1) - dt.timedelta(days=365))]
+		
 		if end_date:
 			parameters.append(end_date)
 		
@@ -447,6 +457,7 @@ class DBfuncs(object):
 		if card:
 			#parameters = [card] + parameters
 			query = QUERIES['CARD_MONTH_WASTE'].format(APPEND_END_DATE if end_date else '')
+			#query = QUERIES['CARD_MONTH_WASTE'].format(APPEND_END_DATE if end_date else dt.date.today())
 			tmp = []
 			for i in card:
 				tmp.append(await self._execute(query, [i[0]]+parameters))
@@ -456,6 +467,7 @@ class DBfuncs(object):
 		else:
 			parameters = [producer_id] + parameters
 			query = QUERIES['CONTAINER_MONTH_WASTE'].format(APPEND_END_DATE if end_date else '')
+			#query = QUERIES['CONTAINER_MONTH_WASTE'].format(APPEND_END_DATE if end_date else dt.date.today())
 			ret = await self._execute(query, parameters)
 		
 		totals = OrderedDict()
@@ -467,11 +479,12 @@ class DBfuncs(object):
 			totals[month][w] = float(v)
 			totals[month]['TOTAL'] += totals[month][w]
 		
+		print(totals)
 		return [{'date': k, 'waste': v} for k,v in totals.items()]
 
 
 	async def get_producer_real_bill(self, producer_id):
-		parameters = [producer_id, (dt.date.today() - dt.timedelta(365/12)).replace(day=1)] #TODO: review this
+		parameters = [producer_id]
 
 		ret = await self._execute(QUERIES['PRODUCER_REAL_BILL'], parameters)
 
@@ -484,30 +497,32 @@ class DBfuncs(object):
 
 	async def get_producer_real_bills(self, producer_id, n=12):
 
-		parameters = [producer_id, (dt.date.today() - dt.timedelta(n*365/12)).replace(day=1)] #TODO: review this
+		parameters = [producer_id, n] 
 
 		ret = await self._execute(QUERIES['PRODUCER_REAL_BILLS'], parameters)
-
+		print(ret)
 		return [{
 				'issue_date': str(bill[0]),
 				'value': float(bill[1]),
-				'period_begin': str(ret[0][2]),
-				'period_end': str(ret[0][3])
+				'period_begin': str(bill[2]),
+				'period_end': str(bill[3])
 		} for bill in ret]
 
 	async def get_producer_simulated_bill(self, producer_id):
-		parameters = [producer_id, (dt.date.today() - dt.timedelta(365/12)).replace(day=1)] #TODO: review this
+		parameters = [producer_id]
 
 		ret = await self._execute(QUERIES['PRODUCER_SIMULATED_BILL'], parameters)
 
 		return {
 			'issue_date': str(ret[0][0]),
-			'value': float(ret[0][1])
+			'value': float(ret[0][1]),
+			'period_begin': str(ret[0][2]),
+			'period_end': str(ret[0][3])
 		} if ret else None
 
 	async def get_producer_simulated_bills(self, producer_id, n=12):
 
-		parameters = [producer_id, (dt.date.today() - dt.timedelta(n*365/12)).replace(day=1)] #TODO: review this
+		parameters = [producer_id, n] 
 
 		ret = await self._execute(QUERIES['PRODUCER_SIMULATED_BILLS'], parameters)
 
@@ -518,10 +533,25 @@ class DBfuncs(object):
 
 	async def get_producer_day_average(self, producer_id, start_date=None, end_date=None):
 		card = await self.producer_card(producer_id)
+		
+		# sendo que end_date é o dia em que estamos e queremos a média pessoal do mes passado
+		first_day_of_lasth_month = ""
+		last_day_of_lasth_month = ""
 
-		parameters = [start_date if start_date else dt.date.today().replace(day=1)]
 		if end_date:
-			parameters.append(end_date)
+			date_aux = dt.datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S").replace(day=1)
+			first_day_of_lasth_month = date_aux - relativedelta(months=1)
+			last_day_of_lasth_month = date_aux - dt.timedelta(days=1)
+		else:
+			first_day_of_lasth_month = dt.date.today().replace(day=1) - relativedelta(months=1)
+			last_day_of_lasth_month = dt.date.today().replace(day=1) - dt.timedelta(days=1)
+
+		number_of_days = last_day_of_lasth_month.day
+		parameters = [first_day_of_lasth_month, last_day_of_lasth_month, number_of_days]
+
+		#parameters = [start_date if start_date else dt.date.today().replace(day=1)]
+		#if end_date:
+			#parameters.append(end_date)
 		
 		ret = []
 		if card:
@@ -541,21 +571,34 @@ class DBfuncs(object):
 		totals = dict()
 		for w,v in ret:
 			totals[w] = float(v)
-		totals['TOTAL'] = sum([v for w,v in totals.items()])
-
+		#totals['TOTAL'] = sum([v for w,v in totals.items()])
+		totals['TOTAL'] = round(sum([v for w,v in totals.items()])/len(totals), 2)
 		return totals
 
 	async def get_producer_zone_day_average(self, producer_id, start_date=None, end_date=None):
 
 		zone = await self.producer_zone(producer_id)
-		print(zone)
 		if not zone: return None
 
 		card = await self.producer_card(producer_id)
-		print(card)
-		parameters = [zone, start_date if start_date else dt.date.today().replace(day=1)]
+		
+		first_day_of_lasth_month = ""
+		last_day_of_lasth_month = ""
+
 		if end_date:
-			parameters.append(end_date)
+			date_aux = dt.datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S").replace(day=1)
+			first_day_of_lasth_month = date_aux - relativedelta(months=1)
+			last_day_of_lasth_month = date_aux - dt.timedelta(days=1)
+		else:
+			first_day_of_lasth_month = dt.date.today().replace(day=1) - relativedelta(months=1)
+			last_day_of_lasth_month = dt.date.today().replace(day=1) - dt.timedelta(days=1)
+
+		number_of_days = last_day_of_lasth_month.day
+		parameters = [number_of_days, zone, first_day_of_lasth_month, last_day_of_lasth_month]
+
+		#parameters = [zone, start_date if start_date else dt.date.today().replace(day=1)]
+		#if end_date:
+			#parameters.append(end_date)
 
 		if card:
 			query = QUERIES['CARD_ZONE_DAY_AVERAGE'].format(APPEND_END_DATE if end_date else '')
@@ -563,16 +606,18 @@ class DBfuncs(object):
 			query = QUERIES['CONTAINER_ZONE_DAY_AVERAGE'].format(APPEND_END_DATE if end_date else '')
 
 		ret = await self._execute(query, parameters)
+		
 		totals = dict()
+
 		if not ret:
 			totals = {}
 			totals['TOTAL'] = 0
 			return totals
-		print(ret)
+
 		for w,v in ret:
 			totals[w] = float(v)
-		totals['TOTAL'] = sum([v for w,v in totals.items()])
-		print(totals)
+		#totals['TOTAL'] = sum([v for w,v in totals.items()])
+		totals['TOTAL'] = round(sum([v for w,v in totals.items()])/len(totals), 2)
 		return totals
 
 	async def calculate_waste_months(self, nMonths):
@@ -946,9 +991,9 @@ class DBfuncs(object):
 
 		if db_res:
 			ret = {}
-			ret['day'] = db_res[0]
-			ret['waste'] = db_res[1]
-			ret['month'] = db_res[2]
+			ret['day'] = db_res[0][0]
+			ret['waste'] = db_res[0][1]
+			ret['month'] = db_res[0][2]
 			logger.debug('[GET_DAYS_HIGHEST_WASTE] - Return built.')
 			return ret
 		else:
@@ -1017,8 +1062,16 @@ class DBfuncs(object):
 		if exists[0][0]:
 			date = dt.date.today() - relativedelta(days=1)
 			qres = await self._execute(QUERIES['CONTAINER_TOTAL_DAY'], [container, date.strftime('%Y-%m-%d')])
-			return qres[0][0]
+			print(qres)
+			if qres:
+				res = 0
+				for x in qres:
+					res = res+x[0]
+				return res
+			else:
+				return 0
 		else:
+			logger.debug('Container does not exist..')
 			return 0
 
 	async def get_container_garbage_week(self, container):
@@ -1027,19 +1080,33 @@ class DBfuncs(object):
 			end = dt.date.today()
 			start = end - relativedelta(days=7)
 			qres = await self._execute(QUERIES['CONTAINER_TOTAL_INTERVAL'], [container, start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')])
-			return qres[0][0]
+			print(qres)
+			if qres:
+				res = 0
+				for x in qres:
+					res = res+x[0]
+				return res
+			else:
+				return 0
 		else:
 			return 0
 
 	async def get_container_garbage_months(self, container, nMonths):
 		logger.debug('[GET_CONTAINER_GARBAGE_MONTHS] - Function called.')
 		exists = await self._execute(QUERIES['CONTAINER_EXISTS'], [container])
+		print(container)
 		if exists[0][0]:
 			end = dt.date.today()
 			start = end - relativedelta(months=nMonths)
 			qres = await self._execute(QUERIES['CONTAINER_TOTAL_INTERVAL'], [container, start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')])
 			logger.debug('[GET_CONTAINER_GARBAGE_MONTHS] - Result retrieved from database.')
-			return qres[0][0]
+			if qres:
+				res = 0
+				for x in qres:
+					res = res+x[0]
+				return res
+			else:
+				return 0
 		else:
 			logger.debug('[GET_CONTAINER_GARBAGE_MONTHS] - Result (ZERO) retrieved from database.')
 			return 0
@@ -1048,12 +1115,14 @@ class DBfuncs(object):
 		logger.debug('[GET_CONTAINERS_USAGE] - Function called.')
 		ids = await self._execute(QUERIES['GET_CONTAINERS_ID'])
 		ret = {}
+		print(ids)
 		for x in ids:
 			ret[x[0]] = {}
 			ret[x[0]]['col1'] = await self.get_container_garbage_day(x[0])
 			ret[x[0]]['col2'] = await self.get_container_garbage_week(x[0])
 			ret[x[0]]['col3'] = await self.get_container_garbage_months(x[0], 1)
 			ret[x[0]]['col4'] = await self.get_container_garbage_months(x[0], 6)
+			print(ret)
 		logger.debug('[GET_CONTAINERS_USAGE] - Result retrieved from database.')
 
 		return ret
@@ -1061,12 +1130,17 @@ class DBfuncs(object):
 	async def get_container_usage_by_month(self, container, nMonths=6):
 		logger.debug('[GET_CONTAINER_USAGE_BY_MONTH] - Function called.')
 		start = dt.date.today() - relativedelta(months=nMonths)
+		print(start)
 		ret = {}
 
 		for i in range(nMonths):
 			end = start + relativedelta(months=1)
 			count = await self._execute(QUERIES['CONTAINER_TOTAL_INTERVAL'], [container, start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')])
-			ret[start.strftime('%Y-%m')] = count[0][0]
+			print(count)
+			if count:
+				ret[start.strftime('%Y-%m')] = count[0][0]
+			else:
+				ret[start.strftime('%Y-%m')] = 0
 			start = start + relativedelta(months=1)
 
 		logger.debug('[GET_CONTAINER_USAGE_BY_MONTH] - Result retrieved from database.')
@@ -1279,6 +1353,10 @@ class DBfuncs(object):
 		await self._execute(QUERIES['SET_PRODUCER_END'], [end, p_id])
 		logger.debug('[SET_ENDED] - Data updated in Database.')
 
+	async def get_last_date_coll(self):
+		res = await self._execute(QUERIES['GET_LAST_COLLECTION_DATE'])
+		return res[0][0]
+
 	async def ckan_total_rbill(self):
 		ret = []
 		res = await self._execute(QUERIES['CKAN_TOTAL_RBILL'])
@@ -1489,13 +1567,16 @@ class DBfuncs(object):
 		ret = await self._execute(QUERIES['GET_LAST_RBILL_DATE'], [pid])
 
 		last = ret[0][0]
-
-		last_str = (dt.datetime.strptime(last_str, "%d/%m/%Y").date() + relativedelta(days=1)).strftime("%Y-%m-%d")
+		last = last + relativedelta(days=1)
+		
 		logger.debug('[GET_NEW_BILL_DATE] - Return constructed.')
-		return last_str
+		return last
 
 	async def get_count_bills(self, pid):
 		logger.debug('[GET_COUNT_BILLS] - Function called.')
 		ret = await self._execute(QUERIES['COUNT_BILL_PROD'], [pid])
 		logger.debug('[GET_COUNT_BILLS] - Return obtained.')
-		return ret[0][0]
+		if ret:
+			return ret[0][0]
+		else:
+			return 0

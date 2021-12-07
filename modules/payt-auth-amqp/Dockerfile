@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3-alpine3.9
 MAINTAINER Helder Moreira
 
 ENV RABBITMQ_HOST 127.0.0.1
@@ -9,7 +9,7 @@ ENV AUTH_ACCESS_KEY lifepayt
 ENV DB_HOST 127.0.0.1
 ENV DB_PORT 5432
 ENV DB_USERNAME postgres
-ENV DB_PASSWORD postgres_test_pw
+ENV DB_PASSWORD lifepayt
 ENV DB_DBNAME payt_auth
 ENV SECRET lifepayt
 ENV TOKEN_TIME 86400

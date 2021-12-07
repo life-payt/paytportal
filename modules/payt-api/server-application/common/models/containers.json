@@ -6,9 +6,10 @@
     "validateUpsert": true
   },
   "properties": {
-    "ext_id": {
+    "id": {
       "type": "string",
-      "required": true
+      "required": true,
+      "id": true
     },
     "latitude": {
       "type": "string",
@@ -25,6 +26,26 @@
   },
   "validations": [],
   "relations": {},
-  "acls": [],
+  "acls": [
+    {
+      "accessType": "*",
+      "principalType": "ROLE",
+      "principalId": "$unauthenticated",
+      "permission": "DENY"
+    },
+    {
+      "accessType": "*",
+      "principalType": "ROLE",
+      "principalId": "aveiro",
+      "permission": "ALLOW"
+    },
+    {
+      "accessType": "READ",
+      "principalType": "ROLE",
+      "principalId": "admin",
+      "permission": "ALLOW",
+      "property": "find"
+    }
+  ],
   "methods": {}
 }
