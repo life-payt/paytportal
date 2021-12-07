@@ -19,6 +19,7 @@ So to run this software locally, the recommendation is to use the Makefile which
 
 The most important commands to run with the makefile are: 'build_all' and 'run_all', which can be executed by the command 'all'.
 
+
 ## Wiki
 
 There are some things to take into consideration for a more personalised execution and to make updates to suit your needs. For that we advise to take a look at the project [Wiki](https://github.com/life-payt/paytportal/wiki/PAYT-Portal-Wiki).
