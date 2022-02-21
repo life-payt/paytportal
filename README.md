@@ -1,4 +1,4 @@
-# LIFE PAYT SOFTWARE
+# LIFE PAYT Portal
 
 ## Software Description
 
